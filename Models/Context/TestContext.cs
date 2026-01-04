@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace ApiBackend.Models;
+namespace ApiBackend.Models.Context;
 
 public class TestContext : DbContext
 {

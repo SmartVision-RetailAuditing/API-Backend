@@ -1,6 +1,6 @@
 namespace ApiBackend.Models;
 
-public class TestItem
+public class TaskModel
 {
     public long Id { get; set; }
     public string? Name { get; set; }
