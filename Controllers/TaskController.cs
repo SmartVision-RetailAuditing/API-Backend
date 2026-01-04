@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ApiBackend.Models;
 using ApiBackend.Models.Context;
@@ -22,6 +23,7 @@ namespace ApiBackend.Controllers
         }
         
         // GET: api/task/getasks [RBAC: Personnel]
+        [Authorize(Roles = "Personnel,Admin")]
         [HttpGet]
         [Route("gettasks/{personnelId}")]
         public async Task<ActionResult<IEnumerable<TestItem>>> GetAssignedTasks(long personnelId)
@@ -30,6 +32,7 @@ namespace ApiBackend.Controllers
         }
 
         // POST: api/task/assigntask [RBAC: Supervisor]
+        [Authorize(Roles = "Supervisor,Admin")]
         [HttpPost]
         [Route("assigntask")]
         public async Task<ActionResult<TestItem>> PostAssignTask(TestItem task)
