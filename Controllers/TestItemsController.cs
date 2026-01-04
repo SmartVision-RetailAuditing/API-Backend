@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ApiBackend.Models;
+using ApiBackend.Models.Context;
 
 namespace ApiBackend.Controllers
 {
@@ -19,12 +20,15 @@ namespace ApiBackend.Controllers
         {
             _context = context;
         }
-
+        
+       
         // GET: api/TestItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TestItem>>> GetTestItems()
+        public async Task<ActionResult<IEnumerable<TestItemDTO>>> GetTestItems()
         {
-            return await _context.TestItems.ToListAsync();
+            return await _context.TestItems
+                .Select(x => ItemToDTO(x))
+                .ToListAsync();
         }
 
         // GET: api/TestItems/5
@@ -103,5 +107,12 @@ namespace ApiBackend.Controllers
         {
             return _context.TestItems.Any(e => e.Id == id);
         }
+        private static TestItemDTO ItemToDTO(TestItem testItem) =>
+            new TestItemDTO
+            {
+                Id = testItem.Id,
+                Name = testItem.Name,
+                IsComplete = testItem.IsComplete
+            };
     }
 }
