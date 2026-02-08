@@ -1,0 +1,10 @@
+﻿using ApiBackend.Models;
+
+namespace ApiBackend.DTOs.LoginDtos
+{
+    public class LoginResponseDto
+    {
+        public string Token { get; set; } // JWT
+        public UserDto User { get; set; }
+    }
+}
