@@ -1,30 +1,30 @@
-﻿using ApiBackend.Data;
-using ApiBackend.Entities;
-using BCrypt.Net;
-using ApiBackend.Entities;
+﻿using ApiBackend.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiBackend.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(AppDbContext context)
+        public static void SeedDevData(AppDbContext context)
         {
-            // Veritabanı yoksa oluştur
-            context.Database.EnsureCreated();
+            // Same as running 'dotnet ef database update'
+            context.Database.Migrate();
 
             // ---------------------------------------------------------
-            // 1. ADIM: KULLANICILAR (Eğer hiç kullanıcı yoksa ekle)
+            // Users 
             // ---------------------------------------------------------
-            if (!context.Users.Any())
+            if (context.Users.Any())
+                return;
+
+
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword("123456");
+
+            var users = new User[]
             {
-                var passwordHash = BCrypt.Net.BCrypt.HashPassword("123456");
-
-                var users = new User[]
-                {
                     new User
                     {
-                        FullName = "Sistem Yöneticisi",
-                        Email = "admin@sirket.com",
+                        FullName = "System Administrator",
+                        Email = "admin@company.com",
                         PasswordHash = passwordHash,
                         Role = UserRole.ADMIN,
                         EmployeeId = "ADM-001",
@@ -32,50 +32,51 @@ namespace ApiBackend.Data
                     },
                     new User
                     {
-                        FullName = "Ahmet Yılmaz",
-                        Email = "ahmet@sirket.com",
+                        FullName = "Ahmet Yilmaz",
+                        Email = "ahmet@company.com",
                         PasswordHash = passwordHash,
                         Role = UserRole.FIELD_WORKER,
                         EmployeeId = "FW-2025-0042",
                         Phone = "+905551234567",
                         IsActive = true
                     }
-                };
-                context.Users.AddRange(users);
-                context.SaveChanges(); // Önce kullanıcıları kaydet ki ID'leri oluşsun
-            }
+            };
+            context.Users.AddRange(users);
+            context.SaveChanges();
+
 
             // ---------------------------------------------------------
-            // 2. ADIM: MAĞAZALAR (Eğer hiç mağaza yoksa ekle)
+            // Stores
             // ---------------------------------------------------------
-            if (!context.Stores.Any())
+
+            if (context.Stores.Any())
+                return;
+
+            var stores = new Store[]
             {
-                var stores = new Store[]
-                {
-                    new Store { Name = "Migros MM Kadıköy", ChainName = "Migros", Address = "Caferağa Mah, Kadıköy", Latitude = 40.985, Longitude = 29.025, Region = "Anadolu Yakası" },
-                    new Store { Name = "Şok Market Üsküdar", ChainName = "Şok", Address = "Mimar Sinan, Üsküdar", Latitude = 41.025, Longitude = 29.015, Region = "Anadolu Yakası" },
-                    new Store { Name = "CarrefourSA Maltepe", ChainName = "CarrefourSA", Address = "Bağdat Cad, Maltepe", Latitude = 40.950, Longitude = 29.100, Region = "Anadolu Yakası" }
-                };
-                context.Stores.AddRange(stores);
-                context.SaveChanges(); // Mağazaları kaydet
-            }
+                    new Store { Name = "Migros MM Kadikoy", ChainName = "Migros", Address = "Caferaga Mah, Kadikoy", Latitude = 40.985, Longitude = 29.025, Region = "Anadolu Yakasi" },
+                    new Store { Name = "Sok Market Uskudar", ChainName = "Sok", Address = "Mimar Sinan, Uskudar", Latitude = 41.025, Longitude = 29.015, Region = "Anadolu Yakasi" },
+                    new Store { Name = "CarrefourSA Maltepe", ChainName = "CarrefourSA", Address = "Bagdat Cad, Maltepe", Latitude = 40.950, Longitude = 29.100, Region = "Anadolu Yakasi" }
+            };
+            context.Stores.AddRange(stores);
+            context.SaveChanges();
+
 
             // ---------------------------------------------------------
-            // 3. ADIM: GÖREVLER (Eğer hiç görev yoksa ekle)
+            // Tasks
             // ---------------------------------------------------------
-            if (!context.Tasks.Any())
+            if (context.Tasks.Any())
+                return;
+
+            // Get example data
+            var ahmetUser = context.Users.FirstOrDefault(u => u.Email == "ahmet@company.com");
+            var migrosStore = context.Stores.FirstOrDefault(s => s.Name == "Migros MM Kadikoy");
+            var sokStore = context.Stores.FirstOrDefault(s => s.Name == "Sok Market Uskudar");
+
+            if (ahmetUser != null && migrosStore != null)
             {
-                // İlişkili verileri bul
-                var ahmetUser = context.Users.FirstOrDefault(u => u.Email == "ahmet@sirket.com");
-                var migrosStore = context.Stores.FirstOrDefault(s => s.Name == "Migros MM Kadıköy");
-                var sokStore = context.Stores.FirstOrDefault(s => s.Name == "Şok Market Üsküdar");
-
-                // Eğer kullanıcı veya mağaza silindiyse hata vermesin diye kontrol
-                if (ahmetUser != null && migrosStore != null)
-                {
-                    var tasks = new List<AuditTask>
+                var tasks = new List<AuditTask>
                     {
-                        // Gelecek Görev (Aktif)
                         new AuditTask
                         {
                             UserId = ahmetUser.Id,
@@ -83,11 +84,9 @@ namespace ApiBackend.Data
                             TaskType = TaskType.SHELF_AUDIT,
                             Priority = TaskPriority.HIGH,
                             Status = AuditTaskStatus.PENDING,
-                            DueDate = DateTime.UtcNow.AddDays(1), // Yarın
-                            Description = "Süt reyonundaki Pınar ürünlerinin dizilimini kontrol et."
-                            // Entity'de CreatedAt varsa buraya ekle: CreatedAt = DateTime.UtcNow
+                            DueDate = DateTime.UtcNow.AddDays(1),
+                            Description = "Check order of Pinar products on the milk shelves"
                         },
-                        // Tamamlanmış Görev (Geçmiş)
                         new AuditTask
                         {
                             UserId = ahmetUser.Id,
@@ -97,14 +96,14 @@ namespace ApiBackend.Data
                             Status = AuditTaskStatus.COMPLETED,
                             DueDate = DateTime.UtcNow.AddDays(-2),
                             CompletedAt = DateTime.UtcNow.AddDays(-1),
-                            Description = "Rakip fiyat analizi tamamlandı."
+                            Description = "Competition price analysis completed."
                         }
                     };
 
-                    context.Tasks.AddRange(tasks);
-                    context.SaveChanges();
-                }
+                context.Tasks.AddRange(tasks);
+                context.SaveChanges();
             }
+
         }
     }
 }

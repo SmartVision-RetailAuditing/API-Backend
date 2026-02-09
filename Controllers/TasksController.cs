@@ -36,7 +36,7 @@ namespace ApiBackend.Controllers
                 .Include(t => t.User)  // Kullanýcý bilgisini de getir
                 .Where(t => t.UserId == userId) // Sadece BU kullanýcýnýn görevleri
                 .OrderBy(t => t.DueDate) // Tarihe göre sýrala
-                .Select(t => new TaskDto // Entity'i DTO'ya çevir
+                .Select(t => new TaskDto
                 {
                     Id = t.Id,
                     StoreId = t.StoreId,
