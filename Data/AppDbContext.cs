@@ -7,21 +7,19 @@ namespace ApiBackend.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // Veritabanı Tablolarımız
+
         public DbSet<User> Users { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<AuditTask> Tasks { get; set; }
         public DbSet<Audit> Audits { get; set; }
-        public DbSet<AuditProduct> AuditProducts { get; set; } // AI Gözlem Verileri
-        public DbSet<AuditIssue> AuditIssues { get; set; }     // Hatalar / İhlaller
+        public DbSet<AuditProduct> AuditProducts { get; set; }
+        public DbSet<AuditIssue> AuditIssues { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Enumların veritabanında sayı (0,1) yerine yazı ("ADMIN", "PENDING") 
-            // olarak tutulmasını sağlar. Okunabilirlik için çok önemlidir.
-
+            // string conversion for more flexible enums (TEXT instead of INTEGER)
             modelBuilder.Entity<User>()
                 .Property(u => u.Role)
                 .HasConversion<string>();

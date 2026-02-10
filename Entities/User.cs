@@ -1,42 +1,55 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiBackend.Entities
 {
-    // Rolleri Enum olarak tutuyoruz, kod içinde yönetmesi kolay olsun.
     public enum UserRole
     {
-        ADMIN,          // Sistem Yöneticisi
-        SUPERVISOR,     // Bölge Sorumlusu (Görev atayan)
-        FIELD_WORKER    // Saha Elemanı (Mağazaya giden)
+        ADMIN,
+        SUPERVISOR,
+        FIELD_WORKER
     }
 
+    [Table("users")]
     public class User
     {
         [Key]
+        [Column("id")]
         public int Id { get; set; }
 
         [Required]
+        [Column("full_name")]
         [MaxLength(100)]
-        public string FullName { get; set; } // Örn: Ahmet Yılmaz
+        public string FullName { get; set; }
 
         [Required]
+        [Column("email")]
         [EmailAddress]
-        public string Email { get; set; } // Giriş için kullanılacak
+        public string Email { get; set; }
 
         [Required]
-        public string PasswordHash { get; set; } // Şifrenin şifrelenmiş hali (BCrypt)
+        [Column("password_hash")]
+        public string PasswordHash { get; set; }
 
+        [Required]
+        [Column("role")]
         public UserRole Role { get; set; }
 
+        [Column("employee_id")]
         [MaxLength(50)]
-        public string? EmployeeId { get; set; } // Örn: FW-2025-0042 (Mobil Profil ekranı için)
+        public string? EmployeeId { get; set; }
 
+        [Column("phone")]
         [MaxLength(20)]
         public string? Phone { get; set; }
 
-        public bool IsActive { get; set; } = true; // Kullanıcıyı silmek yerine pasife alırız
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
 
+        [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("last_login")]
         public DateTime? LastLogin { get; set; }
     }
 }

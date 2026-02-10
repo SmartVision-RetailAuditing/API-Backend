@@ -1,41 +1,59 @@
-﻿// Bir mağaza ziyaretinin Genel Karnesi. Puan kaç? Kaç ürün var?
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiBackend.Entities
 {
     public enum AuditStatus { COMPLIANT, WARNING, NON_COMPLIANT }
+    [Table("audits")]
     public class Audit
     {
         [Key]
+        [Column("id")]
         public int Id { get; set; }
 
-        public int TaskId { get; set; } // Hangi görevin sonucu?
+        [Required]
+        [Column("task_id")]
+        public int TaskId { get; set; }
+
+        [Required]
+        [Column("store_id")]
         public int StoreId { get; set; }
+
+        [Required]
+        [Column("user_id")]
         public int UserId { get; set; }
 
-        public string? ImageUrl { get; set; } // Çekilen fotoğrafın S3 linki
+        [Required]
+        [Column("image_url")]
+        public string? ImageUrl { get; set; }
 
+        [Required]
+        [Column("capture_date")]
         public DateTime CaptureDate { get; set; } = DateTime.UtcNow;
 
-        // KPI: Genel Uyumluluk Skoru (0-100)
+
+        [Required]
+        [Column("complience_score")]
         public decimal ComplianceScore { get; set; }
 
-        // KPI: Raf Payı (Toplantı notu: "10 üründen 4'ü benim %40")
+
+        [Required]
+        [Column("shelf_share_percentage")]
         public decimal ShelfSharePercentage { get; set; }
 
-        public AuditStatus Status { get; set; } // Yeşil, Sarı, Kırmızı durumu
+        [Required]
+        [Column("status")]
+        public AuditStatus Status { get; set; }
 
-        // AI Analiz Özetleri
-        // DEĞİŞİKLİK: Marka dağılımını JSON olarak tutabiliriz.
-        // Örn: { "Pınar": 10, "Sütaş": 5, "Sek": 3 }
-        // Postgres JSONB desteği sayesinde bunu raporlamak çok kolaydır.
-        [Column(TypeName = "jsonb")]
+        [Column("brand_distrubution_json", TypeName = "jsonb")]
         public string? BrandDistributionJson { get; set; }
 
-        // Detay tablolarına bağlantılar
+        [Required]
+        [Column("products")]
         public List<AuditProduct> Products { get; set; } = new List<AuditProduct>();
+
+        [Required]
+        [Column("issues")]
         public List<AuditIssue> Issues { get; set; } = new List<AuditIssue>();
     }
 }

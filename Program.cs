@@ -1,32 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using ApiBackend.Data;
-// using ApiBackend.Services; // Ýleride Auth servisi gelince burayý açacaðýz
-
+// using ApiBackend.Services; 
 //using ApiBackend.Models;
 //using ApiBackend.Models.Context;
-
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
-
-// 1. Veritabaný Baðlantýsýný Servise Ekle
-// appsettings.json dosyasýndaki "DefaultConnection"ý okur.
+// Gets appsettings.<ENVIRONMENT>.json file's "DefaultConnection"
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-// 2. Controllerlarý Ekle
 builder.Services.AddControllers();
 
 
-
-// JWT Authentication Ayarlarý
+// JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
@@ -51,10 +41,10 @@ builder.Services.AddAuthentication(options =>
 
 
 
-// 3. Swagger (API Dokümantasyonu) Ekle
+// Swagger API Documentation
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger'a JWT Desteði Ekleme
+// Add Authorization Support to Swagger
 builder.Services.AddSwaggerGen(option =>
 {
     option.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "SmartVision API", Version = "v1" });
@@ -62,7 +52,7 @@ builder.Services.AddSwaggerGen(option =>
     option.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Lütfen token'ý 'Bearer [boþluk] TOKENINIZ' formatýnda girin",
+        Description = "Please enter your JWT Token in 'Bearer <JWT_TOKEN>' format",
         Name = "Authorization",
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
         BearerFormat = "JWT",
@@ -89,41 +79,36 @@ builder.Services.AddSwaggerGen(option =>
 var app = builder.Build();
 
 
-// 4. Middleware (Ara Yazýlým) Ayarlarý
+// Checks 'ASPNETCORE_Environment' Environment Variable can be set from Properties/launchProfiles.json
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    // Seed database(dummy data)
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<AppDbContext>();
+            DbInitializer.SeedDevData(context);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Database couldn't seed");
+        }
+    }
 }
 
 
 app.UseHttpsRedirection();
 
 
-app.UseAuthentication();  // Önce kimlik kontrolü
-app.UseAuthorization(); //Sonra yetki kontrolü
+app.UseAuthentication();
+app.UseAuthorization(); 
 
 app.MapControllers();
-
-
-
-// Uygulama ayaða kalkarken veritabanýný tohumla (Seed)
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<AppDbContext>();
-        DbInitializer.Initialize(context);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabaný oluþturulurken bir hata oluþtu.");
-    }
-}
-
-
 
 app.Run();
 

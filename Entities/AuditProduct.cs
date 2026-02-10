@@ -1,44 +1,59 @@
-﻿// Burası "Yapay Zeka Ne Gördü?" tablosudur. Fotoğraftaki her bir süt kutusu, her bir etiket buraya bir satır olarak kaydedilir.
-// Amaç: İleride "Rakip X'in fiyatı neydi?" raporunu çekebilmek.
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiBackend.Entities
 {
+
+    [Table("audit_products")]
     public class AuditProduct
     {
         [Key]
+        [Column("id")]
         public int Id { get; set; }
 
-        public int AuditId { get; set; } // Hangi fotoğrafa ait?
+        [Required]
+        [Column("audit_id")]
+        public int AuditId { get; set; }
 
         [Required]
+        [Column("product_name")]
         [MaxLength(100)]
-        public string ProductName { get; set; } // Örn: Pınar Süt 1L
+        public string ProductName { get; set; }
 
+        [Column("product_code")]
         [MaxLength(50)]
-        public string? ProductCode { get; set; } // Barkod/SKU
+        public string? ProductCode { get; set; }
 
-        // DEĞİŞİKLİK 1: "Biz vs Diğerleri" yerine Marka Adı
         [Required]
+        [Column("brand_name")]
         [MaxLength(50)]
-        public string BrandName { get; set; } // "Pınar", "Sütaş", "Torku", "Sek"
+        public string BrandName { get; set; }
 
-        // Toplantı notu: "Fiyat okuma için OCR kullanılıyor"
-        [Column(TypeName = "decimal(10, 2)")]
+        [Column("price", TypeName = "decimal(10, 2)")]
         public decimal? Price { get; set; }
 
-        // DEĞİŞİKLİK 2: Manuel Müdahale Takibi
-        // Eğer saha çalışanı fiyatı veya ismi elle düzeltirse bu true olacak.
+        [Required]
+        [Column("is_manually_edited")]
         public bool IsManuallyEdited { get; set; } = false;
 
-        // Koordinatlar (Mobil UI'da kutucuğa tıklamak için şart)
+        [Required]
+        [Column("boundind_box_x")]
         public int BoundingBoxX { get; set; }
+
+        [Required]
+        [Column("boundind_box_y")]
         public int BoundingBoxY { get; set; }
+
+        [Required]
+        [Column("boundind_box_width")]
+
         public int BoundingBoxWidth { get; set; }
+        [Required]
+        [Column("boundind_box_height")]
         public int BoundingBoxHeight { get; set; }
 
-        public double ConfidenceScore { get; set; } // AI Güven Skoru
+        [Required]
+        [Column("confidence_score")]
+        public double ConfidenceScore { get; set; }
     }
 }

@@ -1,5 +1,4 @@
-﻿// Hangi saha çalışanı hangi mağazaya, ne zaman ve neden gidecek?
-
+﻿
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,36 +7,56 @@ namespace ApiBackend.Entities
     public enum AuditTaskStatus { PENDING, IN_PROGRESS, COMPLETED }
     public enum TaskPriority { LOW, MEDIUM, HIGH }
 
-    // Toplantı notlarına göre görev tipleri
+
     public enum TaskType
     {
-        SHELF_AUDIT,            // Standart Raf Denetimi
-        PRICE_CHECK,            // Fiyat Kontrolü (Rakip analizi için)
-        PANORAMA,               // Geniş raf çekimi
-        PLANOGRAM_COMPLIANCE    // Dizilim kontrolü
+        SHELF_AUDIT,
+        PRICE_CHECK,
+        PANORAMA,
+        PLANOGRAM_COMPLIANCE
     }
 
+    [Table("audit_tasks")]
     public class AuditTask
     {
         [Key]
+        [Column("id")]
         public int Id { get; set; }
 
-        [ForeignKey("User")]
+        // FK → User
+        [Column("user_id")]
+        [ForeignKey(nameof(User))]
         public int UserId { get; set; }
-        public User User { get; set; } // Görevi yapacak personel
 
-        [ForeignKey("Store")]
+        public User User { get; set; } = null!;
+
+        // FK → Store
+        [Column("store_id")]
+        [ForeignKey(nameof(Store))]
         public int StoreId { get; set; }
-        public Store Store { get; set; } // Gidilecek mağaza
 
+        public Store Store { get; set; } = null!;
+
+        [Required]
+        [Column("task_type")]
         public TaskType TaskType { get; set; }
+
+        [Required]
+        [Column("priority")]
         public TaskPriority Priority { get; set; }
 
+        [Required]
+        [Column("status")]
         public AuditTaskStatus Status { get; set; } = AuditTaskStatus.PENDING;
 
-        public DateTime DueDate { get; set; } // Son yapılması gereken tarih
-        public DateTime? CompletedAt { get; set; } // Ne zaman tamamlandı?
+        [Required]
+        [Column("due_date")]
+        public DateTime DueDate { get; set; }
 
-        public string? Description { get; set; } // Örn: "Süt reyonuna dikkat et"
+        [Column("completed_at")]
+        public DateTime? CompletedAt { get; set; }
+
+        [Column("description")]
+        public string? Description { get; set; }
     }
 }
