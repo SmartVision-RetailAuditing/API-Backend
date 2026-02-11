@@ -1,13 +1,7 @@
-using ApiBackend.Data;
 using ApiBackend.DTOs.LoginDtos;
-using BCrypt.Net; // Þifre kontrolü için
+using ApiBackend.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-
 
 namespace ApiBackend.Controllers
 {
@@ -15,75 +9,40 @@ namespace ApiBackend.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
-
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        private readonly IAuthService _authService;
+        public AuthController(IAuthService authService)
         {
-            _context = context;
-            _configuration = configuration;
+            _authService = authService;
         }
-
 
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto request)
         {
-            // 1. Kullanýcýyý emaile göre bul
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var response = await _authService.LoginAsync(request);
 
-            if (user == null)
+            if (response == null)
             {
-                return Unauthorized(new { message = "Email veya þifre hatalý." });
+                return Unauthorized(new { message = "Email or password is incorrect." });
             }
 
-            // 2. Þifreyi kontrol et (Hash doðrulamasý)
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
-                return Unauthorized(new { message = "Email veya þifre hatalý." });
-            }
-
-            // 3. JWT Token Oluþtur
-            var token = CreateToken(user);
-
-            // 4. Cevabý dön
-            return Ok(new LoginResponseDto
-            {
-                Token = token,
-                User = new UserDto
-                {
-                    Id = user.Id,
-                    FullName = user.FullName,
-                    Email = user.Email,
-                    Role = user.Role.ToString()
-                }
-            });
+            return Ok(response);
         }
 
-        // Token üretim metodu
-        private string CreateToken(Entities.User user)
+        // POST: api/auth/change-password
+        [HttpPost("change-password")]
+        [Authorize] // Anyone logged in can change his password.
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+            // Token'dan ID'yi al (Baþkasý adýna deðiþtiremesin diye)
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+            int userId = int.Parse(userIdString);
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString()) // Rolü tokena gömüyoruz
-            };
+            var result = await _authService.ChangePasswordAsync(userId, request.OldPassword, request.NewPassword);
 
-            var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
+            if (!result) return BadRequest("The old password was incorrect or the user could not be found.");
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(double.Parse(jwtSettings["DurationInMinutes"])),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return Ok(new { message = "Your password has been successfully changed." });
         }
     }
-
 }

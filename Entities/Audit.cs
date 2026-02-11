@@ -33,7 +33,7 @@ namespace ApiBackend.Entities
 
 
         [Required]
-        [Column("complience_score")]
+        [Column("compliance_score")]
         public decimal ComplianceScore { get; set; }
 
 

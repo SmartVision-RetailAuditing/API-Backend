@@ -41,7 +41,7 @@ namespace ApiBackend.Migrations
 
                     b.Property<decimal>("ComplianceScore")
                         .HasColumnType("numeric")
-                        .HasColumnName("complience_score");
+                        .HasColumnName("compliance_score");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()

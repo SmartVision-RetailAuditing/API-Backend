@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApiBackend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialTables : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -23,7 +23,7 @@ namespace ApiBackend.Migrations
                     user_id = table.Column<int>(type: "integer", nullable: false),
                     image_url = table.Column<string>(type: "text", nullable: false),
                     capture_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    complience_score = table.Column<decimal>(type: "numeric", nullable: false),
+                    compliance_score = table.Column<decimal>(type: "numeric", nullable: false),
                     shelf_share_percentage = table.Column<decimal>(type: "numeric", nullable: false),
                     status = table.Column<string>(type: "text", nullable: false),
                     brand_distrubution_json = table.Column<string>(type: "jsonb", nullable: true)
