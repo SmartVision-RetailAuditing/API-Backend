@@ -45,15 +45,10 @@ namespace ApiBackend.Entities
         [Column("status")]
         public AuditStatus Status { get; set; }
 
-        [Column("brand_distrubution_json", TypeName = "jsonb")]
-        public string? BrandDistributionJson { get; set; }
-
         [Required]
-        [Column("products")]
         public List<AuditProduct> Products { get; set; } = new List<AuditProduct>();
 
         [Required]
-        [Column("issues")]
         public List<AuditIssue> Issues { get; set; } = new List<AuditIssue>();
     }
 }

@@ -31,10 +31,6 @@ namespace ApiBackend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BrandDistributionJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("brand_distrubution_json");
-
                     b.Property<DateTime>("CaptureDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("capture_date");
@@ -71,7 +67,7 @@ namespace ApiBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("audits");
+                    b.ToTable("audits", (string)null);
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.AuditIssue", b =>
@@ -106,7 +102,7 @@ namespace ApiBackend.Migrations
 
                     b.HasIndex("AuditId");
 
-                    b.ToTable("audit_issues");
+                    b.ToTable("audit_issues", (string)null);
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.AuditProduct", b =>
@@ -171,7 +167,7 @@ namespace ApiBackend.Migrations
 
                     b.HasIndex("AuditId");
 
-                    b.ToTable("audit_products");
+                    b.ToTable("audit_products", (string)null);
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.AuditTask", b =>
@@ -224,7 +220,7 @@ namespace ApiBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("audit_tasks");
+                    b.ToTable("audit_tasks", (string)null);
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.Store", b =>
@@ -266,13 +262,14 @@ namespace ApiBackend.Migrations
                         .HasColumnName("name");
 
                     b.Property<string>("Region")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("region");
 
                     b.HasKey("Id");
 
-                    b.ToTable("stores");
+                    b.ToTable("stores", (string)null);
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.User", b =>
@@ -329,7 +326,7 @@ namespace ApiBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("users");
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.AuditIssue", b =>

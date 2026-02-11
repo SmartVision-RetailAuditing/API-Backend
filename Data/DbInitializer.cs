@@ -9,6 +9,9 @@ namespace ApiBackend.Data
         {
             // Same as running 'dotnet ef database update'
             context.Database.Migrate();
+            
+            //Directly Seeding without migrations
+            // context.Database.EnsureCreated();
 
             // ---------------------------------------------------------
             // Users 
@@ -61,6 +64,46 @@ namespace ApiBackend.Data
             context.Stores.AddRange(stores);
             context.SaveChanges();
 
+            // ---------------------------------------------------------
+            // Audit
+            // ---------------------------------------------------------
+
+            if (context.Audits.Any())
+                return;
+
+            // var testProduct = new AuditProduct
+            // {
+            //     AuditId=0,
+            //     ProductName="Test Product",
+            //     ProductName="Test Product",
+            //
+            // };
+            //
+            // var testIssue = new AuditIssue
+            // {
+            //
+            // };
+
+            // var testProduct = context.AuditProducts.FirstOrDefault(u => u.AuditId == 0);
+            //
+            // var testIssue = context.AuditIssues.FirstOrDefault(u => u.AuditId == 0);
+
+            var audits = new Audit[]
+            {
+                    new Audit { TaskId = 0, StoreId = 1, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.15M , ShelfSharePercentage = 0.7M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+                    new Audit { TaskId = 0, StoreId = 1, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.25M , ShelfSharePercentage = 0.6M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+                    new Audit { TaskId = 0, StoreId = 1, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.35M , ShelfSharePercentage = 0.5M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+
+                    new Audit { TaskId = 0, StoreId = 2, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.25M , ShelfSharePercentage = 0.6M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+                    new Audit { TaskId = 0, StoreId = 2, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.35M , ShelfSharePercentage = 0.5M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+                    new Audit { TaskId = 0, StoreId = 2, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.45M , ShelfSharePercentage = 0.4M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+
+                    new Audit { TaskId = 0, StoreId = 3, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.35M , ShelfSharePercentage = 0.5M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+                    new Audit { TaskId = 0, StoreId = 3, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.45M , ShelfSharePercentage = 0.4M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+                    new Audit { TaskId = 0, StoreId = 3, UserId = 0, CaptureDate = DateTime.UtcNow, ComplianceScore = 0.55M , ShelfSharePercentage = 0.3M, Status = AuditStatus.COMPLIANT,ImageUrl = "emptyUrl"},
+            };
+            context.Audits.AddRange(audits);
+            context.SaveChanges();
 
             // ---------------------------------------------------------
             // Tasks

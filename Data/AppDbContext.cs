@@ -15,6 +15,8 @@ namespace ApiBackend.Data
         public DbSet<AuditProduct> AuditProducts { get; set; }
         public DbSet<AuditIssue> AuditIssues { get; set; }
 
+        public DbSet<StoreCompliance> StoreCompliances { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -47,6 +49,12 @@ namespace ApiBackend.Data
             modelBuilder.Entity<AuditIssue>()
                 .Property(i => i.Severity)
                 .HasConversion<string>();
+
+            modelBuilder.Entity<StoreCompliance>(entity =>
+            {
+                entity.HasNoKey();                 // Views usually have no PK
+                entity.ToView("vw_store_compliance");
+            });
         }
     }
 }

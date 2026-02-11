@@ -3,17 +3,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiBackend.Entities
 {
-    [Table("stores")]
-    public class Store
+    public class StoreCompliance
     {
         [Key]
-        [Column("id")]
-        public int Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [Column("store_id")]
+        public int StoreId { get; set; }
 
         [Required]
-        [Column("name")]
+        [Column("store_name")]
         [MaxLength(150)]
-        public string Name { get; set; }
+        public string StoreName { get; set; }
 
         [Required]
         [Column("chain_name")]
@@ -40,5 +40,15 @@ namespace ApiBackend.Entities
         [Required]
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [Column("compliance")]
+        public decimal Compliance { get; set; }
+
+        [Required]
+        [Column("shelf_share_percentage")]
+        public decimal ShelfPercentage { get; set; }
+
     }
 }
+
