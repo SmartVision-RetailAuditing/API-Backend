@@ -13,6 +13,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
+// 1. Repositories (Data Access Layer) Injection
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IUserRepository, ApiBackend.Repositories.Impl.UserRepository>();
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.ITaskRepository, ApiBackend.Repositories.Impl.TaskRepository>();
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IStoreRepository, ApiBackend.Repositories.Impl.StoreRepository>();
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditRepository, ApiBackend.Repositories.Impl.AuditRepository>();
+
+// 2. Services (Business Logic Layer) Injection
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuthService, ApiBackend.Services.Impl.AuthService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.ITaskService, ApiBackend.Services.Impl.TaskService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IStoreService, ApiBackend.Services.Impl.StoreService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IUserService, ApiBackend.Services.Impl.UserService>();
+
 builder.Services.AddControllers();
 
 
@@ -104,43 +116,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
 app.UseAuthentication();
 app.UseAuthorization(); 
 
 app.MapControllers();
 
 app.Run();
-
-
-
-//builder.Services.AddDbContext<TestContext>(opt =>
-//    opt.UseInMemoryDatabase("TestList"));
-//builder.Services.AddDbContext<AnalyticsReportContext>(opt =>
-//    opt.UseInMemoryDatabase("AnalyticsReportList"));
-//builder.Services.AddDbContext<ComplienceReportContext>(opt =>
-//    opt.UseInMemoryDatabase("ComplienceReportList"));
-//builder.Services.AddDbContext<TaskContext>(opt =>
-//    opt.UseInMemoryDatabase("TaskList"));
-//builder.Services.AddDbContext<UserContext>(opt =>
-//    opt.UseInMemoryDatabase("UserList"));
-
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidIssuer = builder.Configuration["AppSettings:Issuer"],
-//            ValidateAudience = true,
-//            ValidAudience = builder.Configuration["AppSettings:Audience"],
-//            ValidateLifetime = true,
-//            IssuerSigningKey = new SymmetricSecurityKey(
-//                Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!)),
-//            ValidateIssuerSigningKey = true
-//        };
-//    });
-
-
-
-//builder.Services.AddScoped<IAuthService,AuthService>();

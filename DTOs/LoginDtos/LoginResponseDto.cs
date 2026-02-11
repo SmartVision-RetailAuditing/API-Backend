@@ -1,4 +1,4 @@
-﻿using ApiBackend.Models;
+﻿using ApiBackend.Entities;
 
 namespace ApiBackend.DTOs.LoginDtos
 {
