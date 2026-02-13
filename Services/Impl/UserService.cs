@@ -1,5 +1,4 @@
 ﻿using ApiBackend.DTOs;
-using ApiBackend.DTOs.LoginDtos;
 using ApiBackend.DTOs.StatsDtos;
 using ApiBackend.DTOs.UserDtos;
 using ApiBackend.Repositories.Interfaces;
@@ -93,8 +92,8 @@ namespace ApiBackend.Services.Impl
                     TotalTasks = totalTasks,
                     CompletedTasks = completedTasks,
                     PendingTasks = pendingTasks,
-                    TotalStoreVisits = completedTasks, // Simple logic: each completed task = 1 visit / Basit mantık: her tamamlanan görev = 1 ziyaret
-                    AverageScore = avgScore, // // ARTIK GERÇEK VERİ
+                    TotalStoreVisits = completedTasks, // Each completed task = 1 visit / Her tamamlanan görev = 1 ziyaret
+                    AverageScore = avgScore,
                     CompletionRate = completionRate
                 }
             };
@@ -173,15 +172,17 @@ namespace ApiBackend.Services.Impl
         }
 
         /// <summary>
-        /// Retrieves all users from the system
-        /// Sistemdeki tüm kullanıcıları getirir
+        /// Retrieves all users from the system (with pagination)
+        /// Sistemdeki tüm kullanıcıları getirir (sayfalama ile)
         /// </summary>
+        /// <param name="page">Page number for pagination / Sayfalama için sayfa numarası</param>
+        /// <param name="size">Number of items per page / Sayfa başına öğe sayısı</param>
         /// <returns>List of user DTOs / Kullanıcı DTO'larının listesi</returns>
-        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync(int page = 1, int size = 10)
         {
-            // Fetch all users from repository
-            // Repository'den tüm kullanıcıları çek
-            var users = await _userRepository.GetAllUsersAsync();
+            // Fetch users from repository with pagination
+            // Repository'den kullanıcıları sayfalama ile çek
+            var users = await _userRepository.GetAllUsersAsync(page, size);
 
             // Map entities to DTOs using LINQ projection
             // Entity'leri LINQ projeksiyonu kullanarak DTO'lara dönüştür
@@ -190,9 +191,38 @@ namespace ApiBackend.Services.Impl
                 Id = u.Id,
                 FullName = u.FullName,
                 Email = u.Email,
-                Role = u.Role.ToString()
+                Role = u.Role.ToString(),
+                EmployeeId = u.EmployeeId,
+                Phone = u.Phone
             });
         }
+
+        /// <summary>
+        /// Retrieves a specific user by ID
+        /// Belirli bir kullanıcıyı ID ile getirir
+        /// </summary>
+        /// <param name="id">User ID / Kullanıcı ID'si</param>
+        /// <returns>User DTO or null if not found / Kullanıcı DTO'su veya bulunamazsa null</returns>
+        public async Task<UserDto> GetUserByIdAsync(int id)
+        {
+            // Find user by ID
+            // Kullanıcıyı ID ile bul
+            var user = await _userRepository.GetUserByIdAsync(id);
+            if (user == null) return null;
+
+            // Map entity to DTO
+            // Entity'yi DTO'ya dönüştür
+            return new UserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role.ToString(),
+                EmployeeId = user.EmployeeId,
+                Phone = user.Phone
+            };
+        }
+
 
         /// <summary>
         /// Creates a new user in the system
@@ -235,7 +265,9 @@ namespace ApiBackend.Services.Impl
                 Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
-                Role = user.Role.ToString()
+                Role = user.Role.ToString(),
+                EmployeeId = user.EmployeeId,
+                Phone = user.Phone
             };
         }
 
@@ -314,6 +346,30 @@ namespace ApiBackend.Services.Impl
             await _userRepository.UpdateUserAsync(user);
 
             return true;
+        }
+
+        /// <summary>
+        /// Retrieves all field workers from the system
+        /// Sistemdeki tüm saha çalışanlarını getirir
+        /// </summary>
+        /// <returns>List of field worker DTOs / Saha çalışanı DTO'larının listesi</returns>
+        public async Task<IEnumerable<UserDto>> GetFieldWorkersAsync()
+        {
+            // Call repository with FIELD_WORKER enum
+            // Repository'i FIELD_WORKER enum'ı ile çağır
+            var workers = await _userRepository.GetUsersByRoleAsync(Entities.UserRole.FIELD_WORKER);
+
+            // Map entities to DTOs
+            // Entity'leri DTO'lara dönüştür
+            return workers.Select(u => new UserDto
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Email = u.Email,
+                Role = u.Role.ToString(),
+                EmployeeId = u.EmployeeId,
+                Phone = u.Phone
+            });
         }
     }
 }

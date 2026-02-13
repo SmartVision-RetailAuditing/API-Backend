@@ -14,22 +14,34 @@ namespace ApiBackend.Repositories.Impl
             _context = context;
         }
 
-        public async Task<IEnumerable<AuditTask>> GetTasksByUserIdAsync(int userId)
+        public async Task<IEnumerable<AuditTask>> GetTasksByUserIdAsync(int userId, int pageNumber, int pageSize)
         {
             return await _context.Tasks
                 .Include(t => t.Store)
                 .Include(t => t.User)
                 .Where(t => t.UserId == userId)
-                .OrderBy(t => t.DueDate)
+                .OrderBy(t => t.DueDate) // Sıralama önemlidir, yoksa sayfalama kayabilir
+                .Skip((pageNumber - 1) * pageSize) // Atla
+                .Take(pageSize)                    // Al
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<AuditTask>> GetAllTasksAsync()
+        // Paginationsuz Metot (İstatistik için)
+        public async Task<IEnumerable<AuditTask>> GetTasksByUserIdAsync(int userId)
+        {
+            return await _context.Tasks
+                .Where(t => t.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<AuditTask>> GetAllTasksAsync(int pageNumber, int pageSize)
         {
             return await _context.Tasks
                 .Include(t => t.Store)
                 .Include(t => t.User)
                 .OrderByDescending(t => t.DueDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
         }
 

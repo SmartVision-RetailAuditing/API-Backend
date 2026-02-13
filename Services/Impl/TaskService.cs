@@ -26,16 +26,18 @@ namespace ApiBackend.Services.Impl
         }
 
         /// <summary>
-        /// Retrieves all tasks assigned to a specific user
-        /// Belirli bir kullanıcıya atanan tüm görevleri getirir
+        /// Retrieves all tasks assigned to a specific user (with pagination)
+        /// Belirli bir kullanıcıya atanan tüm görevleri getirir (sayfalama ile)
         /// </summary>
         /// <param name="userId">User ID / Kullanıcı ID'si</param>
+        /// <param name="page">Page number for pagination / Sayfalama için sayfa numarası</param>
+        /// <param name="size">Number of items per page / Sayfa başına öğe sayısı</param>
         /// <returns>List of task DTOs for the user / Kullanıcı için görev DTO'larının listesi</returns>
-        public async Task<IEnumerable<TaskDto>> GetTasksByUserIdAsync(int userId)
+        public async Task<IEnumerable<TaskDto>> GetTasksByUserIdAsync(int userId, int page = 1, int size = 10)
         {
-            // Fetch tasks from repository for specific user
-            // Belirli kullanıcı için repository'den görevleri çek
-            var tasks = await _taskRepository.GetTasksByUserIdAsync(userId);
+            // Fetch tasks from repository for specific user with pagination
+            // Belirli kullanıcı için repository'den görevleri sayfalama ile çek
+            var tasks = await _taskRepository.GetTasksByUserIdAsync(userId, page, size);
 
             // Mapping (Entity -> DTO) is done in service layer
             // Mapping (Entity -> DTO) servis katmanında yapılır
@@ -43,19 +45,40 @@ namespace ApiBackend.Services.Impl
         }
 
         /// <summary>
-        /// Retrieves all tasks in the system
-        /// Sistemdeki tüm görevleri getirir
+        /// Retrieves all tasks in the system (with pagination)
+        /// Sistemdeki tüm görevleri getirir (sayfalama ile)
         /// </summary>
+        /// <param name="page">Page number for pagination / Sayfalama için sayfa numarası</param>
+        /// <param name="size">Number of items per page / Sayfa başına öğe sayısı</param>
         /// <returns>List of all task DTOs / Tüm görev DTO'larının listesi</returns>
-        public async Task<IEnumerable<TaskDto>> GetAllTasksAsync()
+        public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(int page = 1, int size = 10)
         {
-            // Fetch all tasks from repository
-            // Repository'den tüm görevleri çek
-            var tasks = await _taskRepository.GetAllTasksAsync();
+            // Fetch all tasks from repository with pagination
+            // Repository'den tüm görevleri sayfalama ile çek
+            var tasks = await _taskRepository.GetAllTasksAsync(page, size);
 
             // Map all tasks to DTOs
             // Tüm görevleri DTO'lara dönüştür
             return tasks.Select(MapToDto);
+        }
+
+        /// <summary>
+        /// Retrieves a specific task by ID
+        /// Belirli bir görevi ID ile getirir
+        /// </summary>
+        /// <param name="id">Task ID / Görev ID'si</param>
+        /// <returns>Task DTO or null if not found / Görev DTO'su veya bulunamazsa null</returns>
+        public async Task<TaskDto> GetTaskByIdAsync(int id)
+        {
+            // Fetch task by ID
+            // Görevi ID ile çek
+            var task = await _taskRepository.GetTaskByIdAsync(id);
+
+            if (task == null) return null;
+
+            // Map entity to DTO
+            // Entity'yi DTO'ya dönüştür
+            return MapToDto(task);
         }
 
         /// <summary>
@@ -130,22 +153,26 @@ namespace ApiBackend.Services.Impl
             };
         }
 
-        /// <summary>
+        //// <summary>
         /// Updates an existing task's information
         /// Mevcut bir görevin bilgilerini günceller
         /// </summary>
         /// <param name="id">Task ID / Görev ID'si</param>
         /// <param name="taskDto">Updated task data / Güncellenmiş görev verisi</param>
         /// <returns>True if successful, false if task not found / Başarılıysa true, görev bulunamazsa false</returns>
-        public async Task<bool> UpdateTaskAsync(int id, CreateTaskDto taskDto)
+        public async Task<bool> UpdateTaskAsync(int id, UpdateTaskDto taskDto)
         {
             // Find task by ID
             // Görevi ID ile bul
             var task = await _taskRepository.GetTaskByIdAsync(id);
             if (task == null) return false;
 
-            // Update task properties
-            // Görev özelliklerini güncelle
+            // First, save the old status.
+            // Önce eski status'u sakla
+            var oldStatus = task.Status;
+
+            // Update other fields
+            // Diğer alanları güncelle
             task.StoreId = taskDto.StoreId;
             task.UserId = taskDto.UserId;
             task.TaskType = taskDto.TaskType;
@@ -153,11 +180,28 @@ namespace ApiBackend.Services.Impl
             task.DueDate = taskDto.DueDate;
             task.Description = taskDto.Description;
 
+            // Check if the status has changed.
+            // Status değişti mi kontrol et
+            if (oldStatus != taskDto.Status)
+            {
+                task.Status = taskDto.Status;
+
+                if (taskDto.Status == AuditTaskStatus.COMPLETED)
+                {
+                    task.CompletedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    task.CompletedAt = null;
+                }
+            }
+
             // Save changes to database
             // Değişiklikleri veritabanına kaydet
             await _taskRepository.UpdateTaskAsync(task);
             return true;
         }
+
 
         /// <summary>
         /// Deletes a task from the system

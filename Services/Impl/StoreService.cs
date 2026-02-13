@@ -26,45 +26,41 @@ namespace ApiBackend.Services.Impl
         }
 
         /// <summary>
-        /// Retrieves all stores from the system with calculated compliance scores
-        /// Hesaplanmış uyumluluk puanları ile sistemdeki tüm mağazaları getirir
+        /// Retrieves all stores from the system with calculated compliance scores (with pagination)
+        /// Hesaplanmış uyumluluk puanları ile sistemdeki tüm mağazaları getirir (sayfalama ile)
         /// </summary>
+        /// <param name="pageNumber">Page number for pagination / Sayfalama için sayfa numarası</param>
+        /// <param name="pageSize">Number of items per page / Sayfa başına öğe sayısı</param>
         /// <returns>List of store DTOs with real compliance data / Gerçek uyumluluk verileri ile mağaza DTO'larının listesi</returns>
-        public async Task<IEnumerable<StoreDto>> GetAllStoresAsync()
+        public async Task<IEnumerable<StoreDto>> GetAllStoresAsync(int pageNumber = 1, int pageSize = 10)
         {
-            // Fetch all stores from repository
-            // Repository'den tüm mağazaları çek
-            var stores = await _storeRepository.GetAllStoresAsync();
+            // Fetch stores with audits using Include (optimized query)
+            // Include kullanarak mağazaları auditler ile birlikte çek (optimize edilmiş sorgu)
+            var stores = await _storeRepository.GetStoresWithAuditsAsync(pageNumber, pageSize);
 
-            // We need to calculate score for each store
-            // Her mağaza için puanı hesaplamamız lazım
-            // Note: For performance, this calculation should be done on SQL side in the future, but for now we'll do it in a loop
-            // Not: Performans için ileride bu hesaplama SQL tarafında yapılmalı ama şimdilik döngü içinde yapalım
-            var storeDtos = new List<StoreDto>();
-
-            foreach (var s in stores)
+            // Map each store to DTO with calculated compliance metrics
+            // Her mağazayı hesaplanmış uyumluluk metrikleri ile DTO'ya dönüştür
+            return stores.Select(s =>
             {
-                // Get audits for this store (we will add this method to repository)
-                // Bu mağazaya ait denetimleri getir (Repository'e bu metodu ekleyeceğiz)
-                var audits = await _auditRepository.GetAuditsByStoreIdAsync(s.Id);
-
                 decimal avgScore = 0;
                 string status = "Unknown";
 
-                if (audits.Any())
+                // s.Audits is now populated (thanks to Include)
+                // s.Audits artık dolu geliyor (Include sayesinde)
+                if (s.Audits != null && s.Audits.Any())
                 {
-                    // Calculate average compliance score from all audits
-                    // Tüm denetimlerden ortalama uyumluluk puanını hesapla
-                    avgScore = audits.Average(a => a.ComplianceScore);
+                    // Calculate average score and round to 2 decimal places
+                    // Ortalama puanı hesapla ve 2 ondalık basamağa yuvarla
+                    avgScore = Math.Round(s.Audits.Average(a => a.ComplianceScore), 2);
 
-                    // Simple status logic
-                    // Basit bir durum mantığı
+                    // Determine status based on average score
+                    // Ortalama puana göre durumu belirle
                     if (avgScore >= 80) status = "Compliant"; // Green / Yeşil
                     else if (avgScore >= 60) status = "Warning"; // Yellow / Sarı
                     else status = "Non-Compliant"; // Red / Kırmızı
                 }
 
-                storeDtos.Add(new StoreDto
+                return new StoreDto
                 {
                     Id = s.Id,
                     Name = s.Name,
@@ -73,11 +69,10 @@ namespace ApiBackend.Services.Impl
                     Address = s.Address,
                     Latitude = s.Latitude,
                     Longitude = s.Longitude,
-                    ComplianceScore = avgScore, // NOW REAL DATA / ARTIK GERÇEK VERİ
-                    Status = status // NOW REAL STATUS / ARTIK GERÇEK DURUM
-                });
-            }
-            return storeDtos;
+                    ComplianceScore = avgScore,
+                    Status = status
+                };
+            });
         }
 
         /// <summary>
@@ -186,7 +181,7 @@ namespace ApiBackend.Services.Impl
         /// <param name="id">Store ID / Mağaza ID'si</param>
         /// <param name="storeDto">Updated store data / Güncellenmiş mağaza verisi</param>
         /// <returns>True if successful, false if store not found / Başarılıysa true, mağaza bulunamazsa false</returns>
-        public async Task<bool> UpdateStoreAsync(int id, CreateStoreDto storeDto)
+        public async Task<bool> UpdateStoreAsync(int id, UpdateStoreDto storeDto)
         {
             // Find store by ID
             // Mağazayı ID ile bul

@@ -24,9 +24,13 @@ namespace ApiBackend.Repositories.Impl
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<IEnumerable<User>> GetAllUsersAsync(int pageNumber, int pageSize)
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Users
+                .OrderBy(u => u.FullName) // İsim sırasına göre
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
 
         public async Task AddUserAsync(User user) { 
@@ -40,6 +44,14 @@ namespace ApiBackend.Repositories.Impl
         public async Task DeleteUserAsync(User user) { 
             _context.Users.Remove(user); 
             await _context.SaveChangesAsync(); 
+        }
+
+        public async Task<IEnumerable<User>> GetUsersByRoleAsync(UserRole role)
+        {
+            return await _context.Users
+                .Where(u => u.Role == role && u.IsActive == true) // Sadece aktif çalışanlar gelsin
+                .OrderBy(u => u.FullName)
+                .ToListAsync();
         }
     }
 }
