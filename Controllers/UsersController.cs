@@ -4,6 +4,7 @@ using ApiBackend.DTOs.StatsDtos;
 using ApiBackend.DTOs.UserDtos;
 using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -31,7 +32,7 @@ namespace ApiBackend.Controllers
 
             var profile = await _userService.GetUserProfileAsync(userId);
 
-            if (profile == null) return NotFound();
+            if (profile == null) return NotFound(new { message = "Profile not found." });
 
             return Ok(profile);
         }
@@ -54,10 +55,35 @@ namespace ApiBackend.Controllers
         // GET: api/users (List All)
         [HttpGet]
         [Authorize(Roles = "ADMIN")]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers([FromQuery] int page = 1, [FromQuery] int size = 10)
         {
-            var users = await _userService.GetAllUsersAsync();
+            var users = await _userService.GetAllUsersAsync(page, size);
             return Ok(users);
+        }
+
+        // GET: api/users/5
+        [HttpGet("{id}")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")] // Detayı kimler görebilsin?
+        public async Task<ActionResult<UserDto>> GetUserById(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            return Ok(user);
+        }
+
+        // GET: api/users/field-workers
+        // Amaç: Görev atama ekranında dropdown doldurmak
+        [HttpGet("field-workers")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")] // Supervisor'lar buraya erişebilir!
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetFieldWorkers()
+        {
+            var workers = await _userService.GetFieldWorkersAsync();
+            return Ok(workers);
         }
 
         // POST: api/users (Create User)
@@ -66,7 +92,9 @@ namespace ApiBackend.Controllers
         public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto request)
         {
             var createdUser = await _userService.CreateUserAsync(request);
-            return Ok(createdUser);
+            // 1.Status Code: 201 Created döner.
+            // 2. Header: Location: api/users/5 bilgisini ekler.
+            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
         }
 
         // PUT: api/users/5 (Update User)
@@ -75,7 +103,7 @@ namespace ApiBackend.Controllers
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDto request)
         {
             var result = await _userService.UpdateUserAsync(id, request);
-            if (!result) return NotFound();
+            if (!result) return NotFound(new { message = "User not found." });
             return NoContent();
         }
 
@@ -85,7 +113,7 @@ namespace ApiBackend.Controllers
         public async Task<IActionResult> DeleteUser(int id)
         {
             var result = await _userService.DeleteUserAsync(id);
-            if (!result) return NotFound();
+            if (!result) return NotFound(new { message = "User not found." });
             return NoContent();
         }
 
@@ -97,7 +125,7 @@ namespace ApiBackend.Controllers
         {
             var result = await _userService.AdminResetPasswordAsync(id, request.NewPassword);
 
-            if (!result) return NotFound("User not found.");
+            if (!result) return NotFound(new { message = "User not found." });
 
             return Ok(new { message = "User password successfully reset." });
         }

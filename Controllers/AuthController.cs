@@ -16,7 +16,7 @@ namespace ApiBackend.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto request)
+        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto request)
         {
             var response = await _authService.LoginAsync(request);
 
@@ -40,9 +40,9 @@ namespace ApiBackend.Controllers
 
             var result = await _authService.ChangePasswordAsync(userId, request.OldPassword, request.NewPassword);
 
-            if (!result) return BadRequest("The old password was incorrect or the user could not be found.");
+            if (!result) return BadRequest(new { message = "Old password is wrong or user not found." });
 
-            return Ok(new { message = "Your password has been successfully changed." });
+            return Ok(new { message = "Password updated successfully." });
         }
     }
 }

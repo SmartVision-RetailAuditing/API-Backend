@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using System.Text.Json.Serialization; // Döngüsel referansı önlemek için
+
 namespace ApiBackend.Entities
 {
     [Table("stores")]
@@ -39,5 +41,11 @@ namespace ApiBackend.Entities
         [Required]
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // İLİŞKİ: Bir mağazanın birden çok denetimi olabilir.
+        // JsonIgnore: API direk Store dönerse Auditleri içine gömmesin diye (DTO kullanıyoruz ama önlem)
+        // Store Service'deki foreach döngüsü performans katilidir. Bunu çözmek için Entity Framework'ün Join yapabilmesi lazım. Bunun için Store entity'sine Audits listesini eklememiz gerek.
+        [JsonIgnore]
+        public ICollection<Audit> Audits { get; set; }
     }
 }

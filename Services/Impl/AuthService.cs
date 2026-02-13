@@ -55,18 +55,18 @@ namespace ApiBackend.Services.Impl
             // Mantık 3: JWT token üret
             var token = CreateToken(user);
 
-            // Return successful login response with token and user data
-            // Token ve kullanıcı verisi ile başarılı giriş yanıtı dön
+            // Return successful login response with token only (user info removed)
+            // Token ile başarılı giriş yanıtı dön (kullanıcı bilgisi kaldırıldı)
             return new LoginResponseDto
             {
                 Token = token,
-                User = new UserDto
-                {
-                    Id = user.Id,
-                    FullName = user.FullName,
-                    Email = user.Email,
-                    Role = user.Role.ToString()
-                }
+                //User = new UserDto
+                //{
+                //    Id = user.Id,
+                //    FullName = user.FullName,
+                //    Email = user.Email,
+                //    Role = user.Role.ToString()
+                //}
             };
         }
 
@@ -99,13 +99,17 @@ namespace ApiBackend.Services.Impl
             // HMAC SHA256 algoritması kullanarak imzalama kimlik bilgilerini oluştur
             var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
 
+            // Get token duration from configuration
+            // Konfigürasyondan token geçerlilik süresini al
+            var duration = _configuration.GetValue<double>("JwtSettings:DurationInMinutes");
+
             // Create JWT token with all parameters
             // Tüm parametrelerle JWT token oluştur
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],           // Token issuer / Token yayıncısı
                 audience: jwtSettings["Audience"],       // Token audience / Token hedef kitlesi
                 claims: claims,                          // User claims / Kullanıcı claims'leri
-                expires: DateTime.Now.AddMinutes(double.Parse(jwtSettings["DurationInMinutes"])), // Expiration time / Geçerlilik süresi
+                expires: DateTime.UtcNow.AddMinutes(duration), // Expiration time / Geçerlilik süresi
                 signingCredentials: creds                // Signing credentials / İmzalama kimlik bilgileri
             );
 

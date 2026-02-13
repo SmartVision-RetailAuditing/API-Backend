@@ -14,14 +14,32 @@ namespace ApiBackend.Repositories.Impl
             _context = context;
         }
 
-        public async Task<IEnumerable<Store>> GetAllStoresAsync()
+        public async Task<IEnumerable<Store>> GetAllStoresAsync(int pageNumber, int pageSize)
         {
-            return await _context.Stores.ToListAsync();
+            return await _context.Stores
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Store>> GetStoresWithAuditsAsync(int pageNumber, int pageSize)
+        {
+            // KRİTİK PERFORMANS DÜZELTMESİ:
+            // Include(s => s.Audits) sayesinde SQL Join atar. 
+            // Tek sorguda (veya optimize 2 sorguda) tüm veriyi çeker. Foreach döngüsüne gerek kalmaz.
+            return await _context.Stores
+                .Include(s => s.Audits)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
 
         public async Task<Store?> GetStoreByIdAsync(int id)
         {
-            return await _context.Stores.FindAsync(id);
+            // Id ile çekerken de Auditleri getirelim ki detay sayfasında puan hesaplayabilelim
+            return await _context.Stores
+                .Include(s => s.Audits)
+                .FirstOrDefaultAsync(s => s.Id == id);
         }
 
         public async Task AddStoreAsync(Store store)
@@ -41,5 +59,7 @@ namespace ApiBackend.Repositories.Impl
             _context.Stores.Remove(store);
             await _context.SaveChangesAsync();
         }
+
+
     }
 }
