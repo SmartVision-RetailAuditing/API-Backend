@@ -46,7 +46,7 @@ namespace ApiBackend.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> UpdateStore(int id, CreateStoreDto request)
+        public async Task<IActionResult> UpdateStore(int id, UpdateStoreDto request)
         {
             var result = await _storeService.UpdateStoreAsync(id, request);
             if (!result) return NotFound(new { message = "Store not found." });
@@ -60,7 +60,7 @@ namespace ApiBackend.Controllers
             var result = await _storeService.DeleteStoreAsync(id);
             // Sadece NotFound() değil, mesaj dönmeli
             if (!result) return NotFound(new { message = "Store not found." });
-            return NoContent(); // // Delete başarılı ise genelde 204 döner, mesaj dönmeye gerek yoktur.
+            return NoContent(); // Delete başarılı ise genelde 204 döner, mesaj dönmeye gerek yoktur.
         }
     }
 }
