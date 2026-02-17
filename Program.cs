@@ -88,6 +88,20 @@ builder.Services.AddSwaggerGen(option =>
 });
 
 
+// React frontend'inin adresi
+var frontendUrl = "http://localhost:5173";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins(frontendUrl) // Sadece bu adrese izin ver
+              .AllowAnyHeader()         // Tüm HTTP baþlýklarýna (Authorization vs.) izin ver
+              .AllowAnyMethod()         // Tüm metotlara (GET, POST, PUT, DELETE) izin ver
+              .AllowCredentials();      // Cookie veya token ile kimlik doðrulama için gerekli
+    });
+});
+
 var app = builder.Build();
 
 
@@ -115,6 +129,10 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseCors("AllowReactApp"); // Ýsmine yukarýda ne verdiysen o olmalý
 
 app.UseAuthentication();
 app.UseAuthorization(); 
