@@ -97,27 +97,27 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     // Seed database(dummy data)
-    //using (var scope = app.Services.CreateScope())
-    //{
-    //    var services = scope.ServiceProvider;
-    //    try
-    //    {
-    //        var context = services.GetRequiredService<AppDbContext>();
-    //        DbInitializer.SeedDevData(context);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        var logger = services.GetRequiredService<ILogger<Program>>();
-    //        logger.LogError(ex, "Database couldn't seed");
-    //    }
-    //}
+    // using (var scope = app.Services.CreateScope())
+    // {
+    //     var services = scope.ServiceProvider;
+    //     try
+    //     {
+    //         var context = services.GetRequiredService<AppDbContext>();
+    //         DbInitializer.SeedDevData(context);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         var logger = services.GetRequiredService<ILogger<Program>>();
+    //         logger.LogError(ex, "Database couldn't seed");
+    //     }
+    // }
 }
 
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-app.UseAuthorization(); 
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -40,12 +40,6 @@ Thumbs.db
 appsettings.json
 appsettings.*.json
 
-# BUT track Development config
+# Track Development config as a template
 !appsettings.Development.json
-
-# =========================
-# EF Core (/*Designer.cs files are metadata, ignoring does not effect dotnet ef)
-# =========================
-**/Migrations/*Designer.cs
-**/Migrations/*.db
 

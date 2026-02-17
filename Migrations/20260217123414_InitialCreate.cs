@@ -13,27 +13,6 @@ namespace ApiBackend.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "audits",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    task_id = table.Column<int>(type: "integer", nullable: false),
-                    store_id = table.Column<int>(type: "integer", nullable: false),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    image_url = table.Column<string>(type: "text", nullable: false),
-                    capture_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    compliance_score = table.Column<decimal>(type: "numeric", nullable: false),
-                    shelf_share_percentage = table.Column<decimal>(type: "numeric", nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
-                    brand_distrubution_json = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_audits", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "stores",
                 columns: table => new
                 {
@@ -71,6 +50,65 @@ namespace ApiBackend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "audits",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    task_id = table.Column<int>(type: "integer", nullable: false),
+                    store_id = table.Column<int>(type: "integer", nullable: false),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    image_url = table.Column<string>(type: "text", nullable: false),
+                    capture_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    compliance_score = table.Column<decimal>(type: "numeric", nullable: false),
+                    shelf_share_percentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    status = table.Column<string>(type: "text", nullable: false),
+                    brand_distrubution_json = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_audits", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_audits_stores_store_id",
+                        column: x => x.store_id,
+                        principalTable: "stores",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "audit_tasks",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    store_id = table.Column<int>(type: "integer", nullable: false),
+                    task_type = table.Column<string>(type: "text", nullable: false),
+                    priority = table.Column<string>(type: "text", nullable: false),
+                    status = table.Column<string>(type: "text", nullable: false),
+                    due_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    completed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    description = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_audit_tasks", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_audit_tasks_stores_store_id",
+                        column: x => x.store_id,
+                        principalTable: "stores",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_audit_tasks_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -124,38 +162,6 @@ namespace ApiBackend.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "audit_tasks",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    store_id = table.Column<int>(type: "integer", nullable: false),
-                    task_type = table.Column<string>(type: "text", nullable: false),
-                    priority = table.Column<string>(type: "text", nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
-                    due_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    completed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    description = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_audit_tasks", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_audit_tasks_stores_store_id",
-                        column: x => x.store_id,
-                        principalTable: "stores",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_audit_tasks_users_user_id",
-                        column: x => x.user_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_audit_issues_audit_id",
                 table: "audit_issues",
@@ -175,6 +181,11 @@ namespace ApiBackend.Migrations
                 name: "IX_audit_tasks_user_id",
                 table: "audit_tasks",
                 column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audits_store_id",
+                table: "audits",
+                column: "store_id");
         }
 
         /// <inheritdoc />
@@ -193,10 +204,10 @@ namespace ApiBackend.Migrations
                 name: "audits");
 
             migrationBuilder.DropTable(
-                name: "stores");
+                name: "users");
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: "stores");
         }
     }
 }
