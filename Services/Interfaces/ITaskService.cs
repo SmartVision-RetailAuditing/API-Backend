@@ -7,7 +7,7 @@ namespace ApiBackend.Services.Interfaces
         Task<IEnumerable<TaskDto>> GetTasksByUserIdAsync(int userId, int pageNumber, int pageSize);
         Task<IEnumerable<TaskDto>> GetAllTasksAsync(int pageNumber, int pageSize);
         Task<TaskDto> CreateTaskAsync(CreateTaskDto request);
-        Task<bool> UpdateTaskAsync(int id, UpdateTaskDto taskDto);
+        Task<bool> UpdateTaskAsync(int id, UpdateTaskDto taskDto, int currentUserId, string userRole);
         Task<bool> DeleteTaskAsync(int id);
         Task<TaskDto> GetTaskByIdAsync(int id);
     }
