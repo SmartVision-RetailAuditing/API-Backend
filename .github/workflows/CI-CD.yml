@@ -1,9 +1,8 @@
-name: Build Docker Image and Push to ACR (Acceptance, Development)
+name: Build Docker Image and Push to ACR (Development)
 
 on:
   push:
     branches:
-      - acceptance   # acceptance branch pushlanınca çalışır
       - development  # development branch pushlanınca çalışır
 
 jobs:
@@ -26,22 +25,22 @@ jobs:
     - name: Login to ACR
       uses: azure/docker-login@v2
       with:
-        login-server: smartvisioncontainerregistery.azurecr.io
+        login-server: smartvisioncontainerregistry.azurecr.io
         username: ${{ secrets.REGISTRY_USERNAME_ACCEPTANCE }}
         password: ${{ secrets.REGISTRY_PASSWORD_ACCEPTANCE }}
 
     # 4. Docker build & push
     - name: Build and Push Image
       run: |
-        docker build . -t smartvisioncontainerregistery.azurecr.io/smartvision-api:${{ github.sha }}
-        docker push smartvisioncontainerregistery.azurecr.io/smartvision-api:${{ github.sha }}
+        docker build . -t smartvisioncontainerregistry.azurecr.io/smartvision-api:${{ github.sha }}
+        docker push smartvisioncontainerregistry.azurecr.io/smartvision-api:${{ github.sha }}
 
     # 5. Deploy to App Service (Acceptance)
     - name: Deploy to App Service
       uses: azure/webapps-deploy@v2
       with:
         app-name: 'smartvisionbackend'  # acceptance app adı
-        images: 'smartvisioncontainerregistery.azurecr.io/smartvision-api:${{ github.sha }}'
+        images: 'smartvisioncontainerregistry.azurecr.io/smartvision-api:${{ github.sha }}'
 
     # 6. Logout
     - run: az logout
