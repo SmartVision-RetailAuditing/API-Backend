@@ -33,15 +33,15 @@ jobs:
     # 4. Docker build & push
     - name: Build and Push Image
       run: |
-        docker build . -t smartvisioncontainerregistery.azurecr.io/final-image:${{ github.sha }}
-        docker push smartvisioncontainerregistery.azurecr.io/final-image:${{ github.sha }}
+        docker build . -t smartvisioncontainerregistery.azurecr.io/smartvision-api:${{ github.sha }}
+        docker push smartvisioncontainerregistery.azurecr.io/smartvision-api:${{ github.sha }}
 
     # 5. Deploy to App Service (Acceptance)
     - name: Deploy to App Service
       uses: azure/webapps-deploy@v2
       with:
         app-name: 'smartvisionbackend'  # acceptance app adı
-        images: 'smartvisioncontainerregistery.azurecr.io/final-image:${{ github.sha }}'
+        images: 'smartvisioncontainerregistery.azurecr.io/smartvision-api:${{ github.sha }}'
 
     # 6. Logout
     - run: az logout
