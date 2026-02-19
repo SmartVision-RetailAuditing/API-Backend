@@ -86,14 +86,29 @@ namespace ApiBackend.Controllers
         }
 
 
-        // PUT: api/tasks/5 (Update)
         [HttpPut("{id}")]
-        [Authorize(Roles = "SUPERVISOR,ADMIN")]
-        public async Task<IActionResult> UpdateTask(int id, UpdateTaskDto request)
+        [Authorize(Roles = "SUPERVISOR,ADMIN,FIELD_WORKER")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDto request)
         {
-            var result = await _taskService.UpdateTaskAsync(id, request);
-            if (!result) return NotFound(new { message = "Task not found." });
-            return NoContent();
+            // 1. Controller sadece adamýn KÝM olduðunu bulur
+            var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            int currentUserId = string.IsNullOrEmpty(userIdString) ? 0 : int.Parse(userIdString);
+
+            try
+            {
+                // 2. Ýþi Service'e devreder (currentUserId ve userRole'ü de parametre olarak yollarýz)
+                var result = await _taskService.UpdateTaskAsync(id, request, currentUserId, userRole);
+                if (!result) return NotFound(new { message = "Task not found." });
+
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 3. Service "Bu adamýn yetkisi yok" diye hata fýrlatýrsa 403 döner
+                return StatusCode(403, new { message = ex.Message });
+            }
         }
 
 

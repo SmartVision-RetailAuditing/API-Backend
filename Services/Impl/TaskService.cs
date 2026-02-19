@@ -153,40 +153,60 @@ namespace ApiBackend.Services.Impl
             };
         }
 
-        //// <summary>
+        /// <summary>
         /// Updates an existing task's information
         /// Mevcut bir görevin bilgilerini günceller
         /// </summary>
         /// <param name="id">Task ID / Görev ID'si</param>
         /// <param name="taskDto">Updated task data / Güncellenmiş görev verisi</param>
+        /// <param name="currentUserId">Requesting user ID / İsteği atan kullanıcı ID'si</param>
+        /// <param name="userRole">Requesting user Role / İsteği atan kullanıcı Rolü</param>
         /// <returns>True if successful, false if task not found / Başarılıysa true, görev bulunamazsa false</returns>
-        public async Task<bool> UpdateTaskAsync(int id, UpdateTaskDto taskDto)
+        public async Task<bool> UpdateTaskAsync(int id, UpdateTaskDto taskDto, int currentUserId, string userRole)
         {
             // Find task by ID
             // Görevi ID ile bul
             var task = await _taskRepository.GetTaskByIdAsync(id);
             if (task == null) return false;
 
+            // --- GÜVENLİK VE İŞ MANTIĞI (BUSINESS LOGIC) ---
+            if (userRole == "FIELD_WORKER")
+            {
+                // Saha elemanı başkasının görevini güncelleyemez
+                if (task.UserId != currentUserId) // task.AssigneeId kullanıyorsan ona göre değiştir
+                    throw new UnauthorizedAccessException("You can only update your own tasks.");
+
+                // Saha elemanı mağaza, tarih vb. değiştiremesin diye gelen verileri eziyoruz
+                taskDto.StoreId = null;
+                taskDto.UserId = null;
+                taskDto.TaskType = null;
+                taskDto.Priority = null;
+                taskDto.DueDate = null;
+            }
+            // ------------------------------------------------
+
             // First, save the old status.
             // Önce eski status'u sakla
             var oldStatus = task.Status;
 
-            // Update other fields
+            // Update other fields (Partial Update - Sadece dolu gelenleri güncelle)
             // Diğer alanları güncelle
-            task.StoreId = taskDto.StoreId;
-            task.UserId = taskDto.UserId;
-            task.TaskType = taskDto.TaskType;
-            task.Priority = taskDto.Priority;
-            task.DueDate = taskDto.DueDate;
-            task.Description = taskDto.Description;
+            if (taskDto.StoreId.HasValue) task.StoreId = taskDto.StoreId.Value;
+            if (taskDto.UserId.HasValue) task.UserId = taskDto.UserId.Value;
+            if (taskDto.TaskType.HasValue) task.TaskType = taskDto.TaskType.Value;
+            if (taskDto.Priority.HasValue) task.Priority = taskDto.Priority.Value;
+            if (taskDto.DueDate.HasValue) task.DueDate = taskDto.DueDate.Value;
+
+            // Description string olduğu için null kontrolü yapıyoruz
+            if (taskDto.Description != null) task.Description = taskDto.Description;
 
             // Check if the status has changed.
             // Status değişti mi kontrol et
-            if (oldStatus != taskDto.Status)
+            if (taskDto.Status.HasValue && oldStatus != taskDto.Status.Value)
             {
-                task.Status = taskDto.Status;
+                task.Status = taskDto.Status.Value;
 
-                if (taskDto.Status == AuditTaskStatus.COMPLETED)
+                if (task.Status == AuditTaskStatus.COMPLETED)
                 {
                     task.CompletedAt = DateTime.UtcNow;
                 }
