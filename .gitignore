@@ -18,8 +18,6 @@ obj/
 # =========================
 .vs/
 .vscode/
-
-# Rider
 .idea/
 *.sln.iml
 
@@ -37,15 +35,13 @@ Thumbs.db
 # =========================
 # Environment / secrets
 # =========================
-appsettings.json
-appsettings.*.json
 
-# BUT track Development config
-!appsettings.Development.json
+# Local secrets ONLY
+appsettings.Development.json
+appsettings.Acceptance.json
+appsettings.Main.json
+appsettings.Local.json
 
-# =========================
-# EF Core (/*Designer.cs files are metadata, ignoring does not effect dotnet ef)
-# =========================
+# EF Core
 **/Migrations/*Designer.cs
 **/Migrations/*.db
-

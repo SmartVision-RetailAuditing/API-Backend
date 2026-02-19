@@ -1,0 +1,8 @@
+
+# Local user secrets ve appsettings
+appsettings.Development.json
+appsettings.Local.json
+appsettings.json
+*.user
+*.vs
+.vscode/
