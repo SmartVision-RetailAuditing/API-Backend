@@ -5,10 +5,8 @@ namespace ApiBackend.Data
 {
     public static class DbInitializer
     {
-        public static void SeedDevData(AppDbContext context)
+        public static async Task SeedDevData(AppDbContext context)
         {
-            context.Database.Migrate();
-
             // ---------------------------------------------------------
             // USERS
             // ---------------------------------------------------------
