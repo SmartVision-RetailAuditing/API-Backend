@@ -48,13 +48,31 @@ public abstract class IntegrationTest : IClassFixture<TestFactory>, IAsyncLifeti
         return adminUser;
     }
 
-    protected LoginRequestDto GetTestFieldWorkerUser()
+    protected LoginRequestDto GetTestFieldWorkerUserA()
     {
-        var fieldWorkerUser = new LoginRequestDto();
-        fieldWorkerUser.Email = "ahmet@company.com";
-        fieldWorkerUser.Password = "123456";
+        var fieldWorkerUserA = new LoginRequestDto();
+        fieldWorkerUserA.Email = "ahmet@company.com";
+        fieldWorkerUserA.Password = "123456";
 
-        return fieldWorkerUser;
+        return fieldWorkerUserA;
+    }
+
+    protected LoginRequestDto GetTestFieldWorkerUserB()
+    {
+        var fieldWorkerUserB = new LoginRequestDto();
+        fieldWorkerUserB.Email = "burak@company.com";
+        fieldWorkerUserB.Password = "123456";
+
+        return fieldWorkerUserB;
+    }
+
+    protected LoginRequestDto GetTestFieldWorkerUserC()
+    {
+        var fieldWorkerUserC = new LoginRequestDto();
+        fieldWorkerUserC.Email = "test1@company.com";
+        fieldWorkerUserC.Password = "123456";
+
+        return fieldWorkerUserC;
     }
 
     protected async Task<LoginResponseDto> AuthenticateUser(LoginRequestDto user)
