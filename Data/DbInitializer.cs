@@ -5,10 +5,8 @@ namespace ApiBackend.Data
 {
     public static class DbInitializer
     {
-        public static void SeedDevData(AppDbContext context)
+        public static async Task SeedDevData(AppDbContext context)
         {
-            context.Database.Migrate();
-
             // ---------------------------------------------------------
             // USERS
             // ---------------------------------------------------------
@@ -46,6 +44,36 @@ namespace ApiBackend.Data
                         EmployeeId = "FW-2025-0042",
                         Phone = "+905551234567",
                         IsActive = true
+                    },
+                    new User
+                    {
+                        FullName = "Burak Yilmaz",
+                        Email = "burak@company.com",
+                        PasswordHash = passwordHash,
+                        Role = UserRole.FIELD_WORKER,
+                        EmployeeId = "FW-2025-0043",
+                        Phone = "+905441234567",
+                        IsActive = true
+                    },
+                    new User
+                    {
+                        FullName = "Test User",
+                        Email = "test1@company.com",
+                        PasswordHash = passwordHash,
+                        Role = UserRole.FIELD_WORKER,
+                        EmployeeId = "FW-2025-0144",
+                        Phone = "+905443234567",
+                        IsActive = true
+                    },
+                    new User
+                    {
+                        FullName = "Test User",
+                        Email = "test2@company.com",
+                        PasswordHash = passwordHash,
+                        Role = UserRole.FIELD_WORKER,
+                        EmployeeId = "FW-2025-0145",
+                        Phone = "+905441234587",
+                        IsActive = true
                     }
                 };
 
@@ -75,10 +103,11 @@ namespace ApiBackend.Data
             if (!context.Tasks.Any())
             {
                 var ahmetUser = context.Users.FirstOrDefault(u => u.Email == "ahmet@company.com");
+                var burakUser = context.Users.FirstOrDefault(u => u.Email == "burak@company.com");
                 var migrosStore = context.Stores.FirstOrDefault(s => s.Name == "Migros MM Kadikoy");
                 var sokStore = context.Stores.FirstOrDefault(s => s.Name == "Sok Market Uskudar");
 
-                if (ahmetUser != null && migrosStore != null)
+                if (ahmetUser != null && burakUser != null && migrosStore != null)
                 {
                     var tasks = new List<AuditTask>
                     {
@@ -102,6 +131,26 @@ namespace ApiBackend.Data
                             DueDate = DateTime.UtcNow.AddDays(-2),
                             CompletedAt = DateTime.UtcNow.AddDays(-1),
                             Description = "Competition price analysis completed."
+                        },
+                        new AuditTask
+                        {
+                            UserId = burakUser.Id,
+                            StoreId = migrosStore.Id,
+                            TaskType = TaskType.SHELF_AUDIT,
+                            Priority = TaskPriority.LOW,
+                            Status = AuditTaskStatus.PENDING,
+                            DueDate = DateTime.UtcNow.AddDays(3),
+                            Description = "Check Pinar cheese products expiration dates."
+                        },
+                        new AuditTask
+                        {
+                            UserId = burakUser.Id,
+                            StoreId = sokStore != null ? sokStore.Id : migrosStore.Id,
+                            TaskType = TaskType.PRICE_CHECK,
+                            Priority = TaskPriority.HIGH,
+                            Status = AuditTaskStatus.PENDING,
+                            DueDate = DateTime.UtcNow.AddDays(1),
+                            Description = "Check Pinar cheese products discount database."
                         }
                     };
 

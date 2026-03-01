@@ -30,3 +30,8 @@ This application runs on ASP.NET version 8.0.122 .Any package to be added must b
 3. Change 'appsettings.Development.json' file's database connection string accordingly.
 3. Run with default profile 'dotnet run'
 
+### Contributing to tests
+- Run 'dotnet restore' for installing necessary dependencies of the testing project  
+- Running 'dotnet test' runs all the tests
+- Running 'dotnet test --filter "FullyQualifiedName~<NamespaceName>.<ClassName>"' runs matching class's tests.
+(for example dotnet test --filter "FullyQualifiedName~ApiBackend.Tests.StoresControllerTests")

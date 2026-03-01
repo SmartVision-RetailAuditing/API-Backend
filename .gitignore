@@ -41,7 +41,3 @@ appsettings.Development.json
 appsettings.Acceptance.json
 appsettings.Main.json
 appsettings.Local.json
-
-# EF Core
-**/Migrations/*Designer.cs
-**/Migrations/*.db

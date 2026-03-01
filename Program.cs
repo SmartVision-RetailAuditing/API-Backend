@@ -111,20 +111,21 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     // Seed database(dummy data)
-    //using (var scope = app.Services.CreateScope())
-    //{
-    //    var services = scope.ServiceProvider;
-    //    try
-    //    {
-    //        var context = services.GetRequiredService<AppDbContext>();
-    //        DbInitializer.SeedDevData(context);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        var logger = services.GetRequiredService<ILogger<Program>>();
-    //        logger.LogError(ex, "Database couldn't seed");
-    //    }
-    //}
+    // using (var scope = app.Services.CreateScope())
+    // {
+    //     var services = scope.ServiceProvider;
+    //     try
+    //     {
+    //         var context = services.GetRequiredService<AppDbContext>();
+    //         context.Database.Migrate();
+    //         await DbInitializer.SeedDevData(context);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         var logger = services.GetRequiredService<ILogger<Program>>();
+    //         logger.LogError(ex, "Database couldn't seed");
+    //     }
+    // }
 }
 
 
@@ -135,8 +136,10 @@ app.UseRouting();
 app.UseCors("AllowReactApp"); // Ýsmine yukarýda ne verdiysen o olmalý
 
 app.UseAuthentication();
-app.UseAuthorization(); 
+app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { } //To make app accessible from ApiBackend.Tests 
