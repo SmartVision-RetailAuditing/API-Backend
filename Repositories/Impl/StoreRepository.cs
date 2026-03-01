@@ -29,6 +29,7 @@ namespace ApiBackend.Repositories.Impl
             // Tek sorguda (veya optimize 2 sorguda) tüm veriyi çeker. Foreach döngüsüne gerek kalmaz.
             return await _context.Stores
                 .Include(s => s.Audits)
+                .OrderByDescending(s => s.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
