@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ApiBackend.DTOs.AuditDtos
 {
-    public class UpdateAuditDtos
+    public class UpdateAuditDto
     {
         public string? ImageUrl { get; set; }
         public DateTime? CaptureDate { get; set; }

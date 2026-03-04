@@ -27,6 +27,9 @@ builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuthService, ApiBacke
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.ITaskService, ApiBackend.Services.Impl.TaskService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IStoreService, ApiBackend.Services.Impl.StoreService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IUserService, ApiBackend.Services.Impl.UserService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditService, ApiBackend.Services.Impl.AuditService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditProductService, ApiBackend.Services.Impl.AuditProductService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditIssueService, ApiBackend.Services.Impl.AuditIssueService>();
 
 builder.Services.AddControllers();
 

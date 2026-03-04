@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ApiBackend.DTOs.AuditDtos
 {
-    public class CreateAuditDtos
+    public class CreateAuditDto
     {
         [Required]
         public int TaskId { get; set; }
