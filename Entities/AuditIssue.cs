@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ApiBackend.Entities
 {
@@ -23,6 +24,10 @@ namespace ApiBackend.Entities
         [Required]
         [Column("audit_id")]
         public int AuditId { get; set; }
+
+        [ForeignKey(nameof(AuditId))]
+        [JsonIgnore]
+        public Audit Audit { get; set; } = null!;
 
         [Required]
         [Column("issue_type")]

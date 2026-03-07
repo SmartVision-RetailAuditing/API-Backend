@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
 
 namespace ApiBackend.Entities
 {
@@ -15,13 +17,25 @@ namespace ApiBackend.Entities
         [Column("task_id")]
         public int TaskId { get; set; }
 
+        [ForeignKey(nameof(TaskId))]
+        [JsonIgnore]
+        public AuditTask Task { get; set; } = null!;
+
         [Required]
         [Column("store_id")]
         public int StoreId { get; set; }
 
+        [ForeignKey(nameof(StoreId))]
+        [JsonIgnore]
+        public Store Store { get; set; } = null!;
+
         [Required]
         [Column("user_id")]
         public int UserId { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        [JsonIgnore]
+        public User User { get; set; } = null!;
 
         [Required]
         [Column("image_url")]

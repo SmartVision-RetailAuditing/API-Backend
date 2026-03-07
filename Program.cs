@@ -20,6 +20,8 @@ builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IStoreRepository, 
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditRepository, ApiBackend.Repositories.Impl.AuditRepository>();
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditProductRepository, ApiBackend.Repositories.Impl.AuditProductRepository>();
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditIssueRepository, ApiBackend.Repositories.Impl.AuditIssueRepository>();
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IDashboardRepository, ApiBackend.Repositories.Impl.DashboardRepository>();
+
 
 
 // 2. Services (Business Logic Layer) Injection
@@ -30,6 +32,7 @@ builder.Services.AddScoped<ApiBackend.Services.Interfaces.IUserService, ApiBacke
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditService, ApiBackend.Services.Impl.AuditService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditProductService, ApiBackend.Services.Impl.AuditProductService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditIssueService, ApiBackend.Services.Impl.AuditIssueService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IDashboardService, ApiBackend.Services.Impl.DashboardService>();
 
 builder.Services.AddControllers();
 

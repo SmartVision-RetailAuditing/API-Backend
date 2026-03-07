@@ -53,33 +53,6 @@ namespace ApiBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "audits",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    task_id = table.Column<int>(type: "integer", nullable: false),
-                    store_id = table.Column<int>(type: "integer", nullable: false),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
-                    image_url = table.Column<string>(type: "text", nullable: false),
-                    capture_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    compliance_score = table.Column<decimal>(type: "numeric", nullable: false),
-                    shelf_share_percentage = table.Column<decimal>(type: "numeric", nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
-                    brand_distrubution_json = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_audits", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_audits_stores_store_id",
-                        column: x => x.store_id,
-                        principalTable: "stores",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "audit_tasks",
                 columns: table => new
                 {
@@ -105,6 +78,45 @@ namespace ApiBackend.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_audit_tasks_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "audits",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    task_id = table.Column<int>(type: "integer", nullable: false),
+                    store_id = table.Column<int>(type: "integer", nullable: false),
+                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    image_url = table.Column<string>(type: "text", nullable: false),
+                    capture_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    compliance_score = table.Column<decimal>(type: "numeric", nullable: false),
+                    shelf_share_percentage = table.Column<decimal>(type: "numeric", nullable: false),
+                    status = table.Column<string>(type: "text", nullable: false),
+                    brand_distrubution_json = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_audits", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_audits_audit_tasks_task_id",
+                        column: x => x.task_id,
+                        principalTable: "audit_tasks",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_audits_stores_store_id",
+                        column: x => x.store_id,
+                        principalTable: "stores",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_audits_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
@@ -186,6 +198,16 @@ namespace ApiBackend.Migrations
                 name: "IX_audits_store_id",
                 table: "audits",
                 column: "store_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audits_task_id",
+                table: "audits",
+                column: "task_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audits_user_id",
+                table: "audits",
+                column: "user_id");
         }
 
         /// <inheritdoc />
@@ -198,16 +220,16 @@ namespace ApiBackend.Migrations
                 name: "audit_products");
 
             migrationBuilder.DropTable(
-                name: "audit_tasks");
-
-            migrationBuilder.DropTable(
                 name: "audits");
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: "audit_tasks");
 
             migrationBuilder.DropTable(
                 name: "stores");
+
+            migrationBuilder.DropTable(
+                name: "users");
         }
     }
 }
