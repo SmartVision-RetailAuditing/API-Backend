@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApiBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260225115103_InitialCreate")]
+    [Migration("20260307131842_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -75,6 +75,10 @@ namespace ApiBackend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("StoreId");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("audits");
                 });
@@ -339,20 +343,40 @@ namespace ApiBackend.Migrations
 
             modelBuilder.Entity("ApiBackend.Entities.Audit", b =>
                 {
-                    b.HasOne("ApiBackend.Entities.Store", null)
+                    b.HasOne("ApiBackend.Entities.Store", "Store")
                         .WithMany("Audits")
                         .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("ApiBackend.Entities.AuditTask", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ApiBackend.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+
+                    b.Navigation("Task");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.AuditIssue", b =>
                 {
-                    b.HasOne("ApiBackend.Entities.Audit", null)
+                    b.HasOne("ApiBackend.Entities.Audit", "Audit")
                         .WithMany("Issues")
                         .HasForeignKey("AuditId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Audit");
                 });
 
             modelBuilder.Entity("ApiBackend.Entities.AuditProduct", b =>
