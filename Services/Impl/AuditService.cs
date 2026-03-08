@@ -1,4 +1,5 @@
-﻿using ApiBackend.DTOs.AuditDtos;
+﻿using ApiBackend.DTOs;
+using ApiBackend.DTOs.AuditDtos;
 using ApiBackend.Entities;
 using ApiBackend.Repositories.Interfaces;
 using ApiBackend.Services.Interfaces;
@@ -14,10 +15,14 @@ namespace ApiBackend.Services.Impl
             _auditRepository = auditRepository;
         }
 
-        public async Task<IEnumerable<AuditDto>> GetAllAuditsAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<AuditDto>> GetAllAuditsAsync(
+            int pageNumber,
+            int pageSize,
+            string? search = null,
+            string? status = null)
         {
-            var audits = await _auditRepository.GetAuditsAsync(pageNumber, pageSize);
-            return audits.Select(MapToDto);
+            // Projection artık repository'de yapılıyor — service sadece iletir
+            return await _auditRepository.GetAuditsAsync(pageNumber, pageSize, search, status);
         }
 
         public async Task<AuditDto?> GetAuditByIdAsync(int id)
@@ -42,8 +47,8 @@ namespace ApiBackend.Services.Impl
                 BrandDistributionJson = dto.BrandDistributionJson
             };
 
-            var createdAudit = await _auditRepository.CreateAuditAsync(audit);
-            return MapToDto(createdAudit);
+            var created = await _auditRepository.CreateAuditAsync(audit);
+            return MapToDto(created);
         }
 
         public async Task<bool> UpdateAuditAsync(int id, UpdateAuditDto dto)
@@ -51,7 +56,6 @@ namespace ApiBackend.Services.Impl
             var audit = await _auditRepository.GetAuditByIdAsync(id);
             if (audit == null) return false;
 
-            // Partial Update (Sadece dolu gelenleri güncelle)
             if (dto.ImageUrl != null) audit.ImageUrl = dto.ImageUrl;
             if (dto.CaptureDate.HasValue) audit.CaptureDate = dto.CaptureDate.Value;
             if (dto.ComplianceScore.HasValue) audit.ComplianceScore = dto.ComplianceScore.Value;
@@ -72,47 +76,45 @@ namespace ApiBackend.Services.Impl
             return true;
         }
 
-        // --- HELPER METHOD: Entity'den DTO'ya Çevirici ---
-        private AuditDto MapToDto(Audit a)
+        // GetAuditByIdAsync için — navigation property'ler Include ile geliyor
+        private AuditDto MapToDto(Audit a) => new AuditDto
         {
-            return new AuditDto
+            Id = a.Id,
+            TaskId = a.TaskId,
+            StoreId = a.StoreId,
+            UserId = a.UserId,
+            StoreName = a.Store?.Name ?? string.Empty,
+            AuditorName = a.User?.FullName ?? string.Empty,
+            TaskType = a.Task?.TaskType.ToString() ?? string.Empty,
+            ImageUrl = a.ImageUrl,
+            CaptureDate = a.CaptureDate,
+            ComplianceScore = a.ComplianceScore,
+            ShelfSharePercentage = a.ShelfSharePercentage,
+            Status = a.Status.ToString(),
+            BrandDistributionJson = a.BrandDistributionJson,
+            Products = a.Products?.Select(p => new AuditProductDto
             {
-                Id = a.Id,
-                TaskId = a.TaskId,
-                StoreId = a.StoreId,
-                UserId = a.UserId,
-                ImageUrl = a.ImageUrl,
-                CaptureDate = a.CaptureDate,
-                ComplianceScore = a.ComplianceScore,
-                ShelfSharePercentage = a.ShelfSharePercentage,
-                Status = a.Status.ToString(),
-                BrandDistributionJson = a.BrandDistributionJson,
-
-                Products = a.Products?.Select(p => new AuditProductDto
-                {
-                    Id = p.Id,
-                    AuditId = p.AuditId,
-                    ProductName = p.ProductName,
-                    ProductCode = p.ProductCode,
-                    BrandName = p.BrandName,
-                    Price = p.Price,
-                    IsManuallyEdited = p.IsManuallyEdited,
-                    BoundingBoxX = p.BoundingBoxX,
-                    BoundingBoxY = p.BoundingBoxY,
-                    BoundingBoxWidth = p.BoundingBoxWidth,
-                    BoundingBoxHeight = p.BoundingBoxHeight,
-                    ConfidenceScore = p.ConfidenceScore
-                }).ToList() ?? new List<AuditProductDto>(),
-
-                Issues = a.Issues?.Select(i => new AuditIssueDto
-                {
-                    Id = i.Id,
-                    AuditId = i.AuditId,
-                    IssueType = i.IssueType.ToString(),
-                    Severity = i.Severity.ToString(),
-                    Description = i.Description
-                }).ToList() ?? new List<AuditIssueDto>()
-            };
-        }
+                Id = p.Id,
+                AuditId = p.AuditId,
+                ProductName = p.ProductName,
+                ProductCode = p.ProductCode,
+                BrandName = p.BrandName,
+                Price = p.Price,
+                IsManuallyEdited = p.IsManuallyEdited,
+                BoundingBoxX = p.BoundingBoxX,
+                BoundingBoxY = p.BoundingBoxY,
+                BoundingBoxWidth = p.BoundingBoxWidth,
+                BoundingBoxHeight = p.BoundingBoxHeight,
+                ConfidenceScore = p.ConfidenceScore
+            }).ToList() ?? new(),
+            Issues = a.Issues?.Select(i => new AuditIssueDto
+            {
+                Id = i.Id,
+                AuditId = i.AuditId,
+                IssueType = i.IssueType.ToString(),
+                Severity = i.Severity.ToString(),
+                Description = i.Description
+            }).ToList() ?? new()
+        };
     }
 }
