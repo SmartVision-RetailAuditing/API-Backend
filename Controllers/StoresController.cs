@@ -18,14 +18,18 @@ namespace ApiBackend.Controllers
             _storeService = storeService;
         }
 
+        // GET: api/stores?page=1&size=10&search=migros
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<StoreDto>>> GetStores([FromQuery] int page = 1, [FromQuery] int size = 10)
+        public async Task<ActionResult<PagedResult<StoreDto>>> GetStores(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] string? search = null)
         {
-            // Pagination parametrelerini servise gönderiyoruz
-            var stores = await _storeService.GetAllStoresAsync(page, size);
-            return Ok(stores);
+            var result = await _storeService.GetAllStoresAsync(page, size, search);
+            return Ok(result);
         }
 
+        // GET: api/stores/5
         [HttpGet("{id}")]
         public async Task<ActionResult<StoreDto>> GetStore(int id)
         {
@@ -34,33 +38,33 @@ namespace ApiBackend.Controllers
             return Ok(store);
         }
 
+        // POST: api/stores — Sadece ADMIN
         [HttpPost]
-        [Authorize(Roles = "ADMIN")] // Only Admins can add stores!
+        [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<StoreDto>> CreateStore([FromBody] CreateStoreDto request)
         {
-            var createdStore = await _storeService.CreateStoreAsync(request);
-
-            // It returns 201 Created and provides a link to the new resource in the header.
-            return CreatedAtAction(nameof(GetStore), new { id = createdStore.Id }, createdStore);
+            var created = await _storeService.CreateStoreAsync(request);
+            return CreatedAtAction(nameof(GetStore), new { id = created.Id }, created);
         }
 
+        // PUT: api/stores/5 — Sadece ADMIN
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> UpdateStore(int id, UpdateStoreDto request)
+        public async Task<IActionResult> UpdateStore(int id, [FromBody] UpdateStoreDto request)
         {
             var result = await _storeService.UpdateStoreAsync(id, request);
             if (!result) return NotFound(new { message = "Store not found." });
-            return NoContent(); // 204 Successful but not returning data.
+            return NoContent();
         }
 
+        // DELETE: api/stores/5 — Sadece ADMIN
         [HttpDelete("{id}")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> DeleteStore(int id)
         {
             var result = await _storeService.DeleteStoreAsync(id);
-            // Sadece NotFound() değil, mesaj dönmeli
             if (!result) return NotFound(new { message = "Store not found." });
-            return NoContent(); // Delete başarılı ise genelde 204 döner, mesaj dönmeye gerek yoktur.
+            return NoContent();
         }
     }
 }

@@ -1,6 +1,8 @@
-﻿using ApiBackend.Repositories.Interfaces;
-using ApiBackend.Data;
+﻿using ApiBackend.Data;
+using ApiBackend.DTOs;
+using ApiBackend.DTOs.StoreDtos;
 using ApiBackend.Entities;
+using ApiBackend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiBackend.Repositories.Impl
@@ -14,30 +16,63 @@ namespace ApiBackend.Repositories.Impl
             _context = context;
         }
 
-        public async Task<IEnumerable<Store>> GetAllStoresAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<StoreDto>> GetStoresAsync(
+            int pageNumber,
+            int pageSize,
+            string? search = null)
         {
-            return await _context.Stores
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-        }
+            var query = _context.Stores.AsQueryable();
 
-        public async Task<IEnumerable<Store>> GetStoresWithAuditsAsync(int pageNumber, int pageSize)
-        {
-            // KRİTİK PERFORMANS DÜZELTMESİ:
-            // Include(s => s.Audits) sayesinde SQL Join atar. 
-            // Tek sorguda (veya optimize 2 sorguda) tüm veriyi çeker. Foreach döngüsüne gerek kalmaz.
-            return await _context.Stores
-                .Include(s => s.Audits)
+            // Search filtresi: Name veya ChainName içinde arama
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var lower = search.ToLower();
+                query = query.Where(s =>
+                    s.Name.ToLower().Contains(lower) ||
+                    s.ChainName.ToLower().Contains(lower) ||
+                    (s.Region != null && s.Region.ToLower().Contains(lower))
+                );
+            }
+
+            var totalCount = await query.CountAsync();
+
+            // ComplianceScore ve AuditCount DB'de hesaplanıyor (RAM'e entity almıyoruz)
+            var data = await query
                 .OrderByDescending(s => s.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Select(s => new StoreDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    ChainName = s.ChainName,
+                    Region = s.Region,
+                    Address = s.Address,
+                    Latitude = s.Latitude,
+                    Longitude = s.Longitude,
+                    AuditCount = s.Audits.Count(),
+                    ComplianceScore = s.Audits.Any()
+                        ? Math.Round(s.Audits.Average(a => a.ComplianceScore), 2)
+                        : 0m,
+                    Status = !s.Audits.Any() ? "Unknown"
+                        : s.Audits.Average(a => a.ComplianceScore) >= 80 ? "Compliant"
+                        : s.Audits.Average(a => a.ComplianceScore) >= 60 ? "Warning"
+                        : "Non-Compliant"
+                })
                 .ToListAsync();
+
+            return new PagedResult<StoreDto>
+            {
+                Data = data,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                CurrentPage = pageNumber,
+                PageSize = pageSize
+            };
         }
 
         public async Task<Store?> GetStoreByIdAsync(int id)
         {
-            // Id ile çekerken de Auditleri getirelim ki detay sayfasında puan hesaplayabilelim
             return await _context.Stores
                 .Include(s => s.Audits)
                 .FirstOrDefaultAsync(s => s.Id == id);
@@ -60,7 +95,5 @@ namespace ApiBackend.Repositories.Impl
             _context.Stores.Remove(store);
             await _context.SaveChangesAsync();
         }
-
-
     }
 }
