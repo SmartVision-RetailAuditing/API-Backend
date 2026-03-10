@@ -58,7 +58,7 @@ namespace ApiBackend.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    user_id = table.Column<int>(type: "integer", nullable: false),
+                    user_id = table.Column<int>(type: "integer", nullable: true),
                     store_id = table.Column<int>(type: "integer", nullable: false),
                     task_type = table.Column<string>(type: "text", nullable: false),
                     priority = table.Column<string>(type: "text", nullable: false),
@@ -80,8 +80,7 @@ namespace ApiBackend.Migrations
                         name: "FK_audit_tasks_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "id");
                 });
 
             migrationBuilder.CreateTable(
@@ -202,7 +201,8 @@ namespace ApiBackend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_audits_task_id",
                 table: "audits",
-                column: "task_id");
+                column: "task_id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_audits_user_id",

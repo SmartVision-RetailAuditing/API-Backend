@@ -9,8 +9,7 @@ namespace ApiBackend.DTOs.TaskDtos
         [Required]
         public int StoreId { get; set; }
 
-        [Required]
-        public int UserId { get; set; } // Kime atıyorsun?
+        public int? UserId { get; set; } // null = atanmamış (unassigned)
 
         [Required]
         public TaskType TaskType { get; set; } // Enum olarak gelecek (0, 1, 2...)

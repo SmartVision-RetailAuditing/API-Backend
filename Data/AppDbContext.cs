@@ -36,6 +36,11 @@ namespace ApiBackend.Data
                 .Property(t => t.Priority)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<AuditTask>()
+                .HasOne(t => t.Audit)
+                .WithOne(a => a.Task)
+                .HasForeignKey<Audit>(a => a.TaskId);
+
             modelBuilder.Entity<Audit>()
                 .Property(a => a.Status)
                 .HasConversion<string>();

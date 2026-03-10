@@ -1,20 +1,28 @@
-﻿using ApiBackend.Entities;
+﻿using ApiBackend.DTOs;
+using ApiBackend.DTOs.UserDtos;
+using ApiBackend.Entities;
 
 namespace ApiBackend.Repositories.Interfaces
 {
     public interface IUserRepository
     {
-        //Task<IEnumerable<User>> GetAllUsersAsync();
-        Task<IEnumerable<User>> GetAllUsersAsync(int pageNumber, int pageSize);
+        // Pagination + search + role filter — Task backend'indeki pattern ile aynı
+        Task<PagedResult<UserDto>> GetAllUsersAsync(
+            int pageNumber,
+            int pageSize,
+            string? search = null,
+            string? role = null
+        );
+
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByIdAsync(int id);
         Task AddUserAsync(User user);
         Task UpdateUserAsync(User user);
-        Task DeleteUserAsync(User user);
 
-        // Role göre kullanıcıları getiren metot
-        // Supervisor'un task'e field_worker atayabilmesi için tüm field_workerleri görmesi gerekir.
-        // GetAllUsers() metodundan farkı bu metodu sadece SUPERVISOR kullanacak ve tüm FIELD_WORKER'ları görecek
-        Task<IEnumerable<User>> GetUsersByRoleAsync(UserRole role);
+        // Soft delete: IsActive = false — hard delete kaldırıldı
+        Task<bool> ToggleUserActiveAsync(int userId);
+
+        // AssignTaskModal için — sadece aktif FIELD_WORKER'lar, search destekli
+        Task<IEnumerable<UserDto>> GetFieldWorkersAsync(string? search = null);
     }
 }
