@@ -6,91 +6,45 @@ using ApiBackend.Services.Interfaces;
 
 namespace ApiBackend.Services.Impl
 {
-    /// <summary>
-    /// Service layer for task-related business logic and operations
-    /// Görev ile ilgili iş mantığı ve işlemleri için servis katmanı
-    /// </summary>
     public class TaskService : ITaskService
     {
-        // Task repository for database access
-        // Veritabanı erişimi için görev repository'si
         private readonly ITaskRepository _taskRepository;
 
-        /// <summary>
-        /// Constructor with dependency injection for task repository
-        /// Görev repository'si için dependency injection ile constructor
-        /// </summary>
         public TaskService(ITaskRepository taskRepository)
         {
             _taskRepository = taskRepository;
         }
 
-        /// <summary>
-        /// Retrieves all tasks assigned to a specific user (with pagination)
-        /// Belirli bir kullanıcıya atanan tüm görevleri getirir (sayfalama ile)
-        /// </summary>
-        /// <param name="userId">User ID / Kullanıcı ID'si</param>
-        /// <param name="page">Page number for pagination / Sayfalama için sayfa numarası</param>
-        /// <param name="size">Number of items per page / Sayfa başına öğe sayısı</param>
-        /// <returns>List of task DTOs for the user / Kullanıcı için görev DTO'larının listesi</returns>
-        public async Task<IEnumerable<TaskDto>> GetTasksByUserIdAsync(int userId, int page = 1, int size = 10)
+        public async Task<TaskStatsDto> GetTaskStatsAsync()
         {
-            // Fetch tasks from repository for specific user with pagination
-            // Belirli kullanıcı için repository'den görevleri sayfalama ile çek
-            var tasks = await _taskRepository.GetTasksByUserIdAsync(userId, page, size);
-
-            // Mapping (Entity -> DTO) is done in service layer
-            // Mapping (Entity -> DTO) servis katmanında yapılır
-            return tasks.Select(MapToDto);
+            return await _taskRepository.GetTaskStatsAsync();
         }
 
-        /// <summary>
-        /// Retrieves all tasks in the system (with pagination)
-        /// Sistemdeki tüm görevleri getirir (sayfalama ile)
-        /// </summary>
-        /// <param name="page">Page number for pagination / Sayfalama için sayfa numarası</param>
-        /// <param name="size">Number of items per page / Sayfa başına öğe sayısı</param>
-        /// <returns>List of all task DTOs / Tüm görev DTO'larının listesi</returns>
-        public async Task<IEnumerable<TaskDto>> GetAllTasksAsync(int page = 1, int size = 10)
+        public async Task<PagedResult<TaskDto>> GetAllTasksAsync(
+            int pageNumber, int pageSize,
+            string? search = null, string? status = null,
+            string? priority = null, string? taskType = null,
+            int? userId = null)
         {
-            // Fetch all tasks from repository with pagination
-            // Repository'den tüm görevleri sayfalama ile çek
-            var tasks = await _taskRepository.GetAllTasksAsync(page, size);
-
-            // Map all tasks to DTOs
-            // Tüm görevleri DTO'lara dönüştür
-            return tasks.Select(MapToDto);
+            return await _taskRepository.GetAllTasksAsync(
+                pageNumber, pageSize, search, status, priority, taskType, userId);
         }
 
-        /// <summary>
-        /// Retrieves a specific task by ID
-        /// Belirli bir görevi ID ile getirir
-        /// </summary>
-        /// <param name="id">Task ID / Görev ID'si</param>
-        /// <returns>Task DTO or null if not found / Görev DTO'su veya bulunamazsa null</returns>
-        public async Task<TaskDto> GetTaskByIdAsync(int id)
+        public async Task<PagedResult<TaskDto>> GetTasksByUserIdAsync(
+            int userId, int pageNumber, int pageSize)
         {
-            // Fetch task by ID
-            // Görevi ID ile çek
+            return await _taskRepository.GetTasksByUserIdAsync(userId, pageNumber, pageSize);
+        }
+
+        public async Task<TaskDto?> GetTaskByIdAsync(int id)
+        {
             var task = await _taskRepository.GetTaskByIdAsync(id);
-
             if (task == null) return null;
-
-            // Map entity to DTO
-            // Entity'yi DTO'ya dönüştür
             return MapToDto(task);
         }
 
-        /// <summary>
-        /// Creates a new task in the system
-        /// Sistemde yeni bir görev oluşturur
-        /// </summary>
-        /// <param name="request">Task creation request DTO / Görev oluşturma istek DTO'su</param>
-        /// <returns>Created task DTO with full details / Tam detaylarıyla oluşturulan görev DTO'su</returns>
         public async Task<TaskDto> CreateTaskAsync(CreateTaskDto request)
         {
-            // Step 1: Create new task entity
-            // Adım 1: Yeni görev entity'si oluştur
             var newTask = new AuditTask
             {
                 StoreId = request.StoreId,
@@ -99,147 +53,77 @@ namespace ApiBackend.Services.Impl
                 Priority = request.Priority,
                 DueDate = request.DueDate,
                 Description = request.Description,
-                Status = AuditTaskStatus.PENDING, // Default status for new tasks / Yeni görevler için varsayılan durum
-                // CreatedAt can be added here if property exists
-                // CreatedAt property varsa buraya eklenebilir
+                Status = AuditTaskStatus.PENDING,
             };
 
-            // Step 2: Save to database
-            // Adım 2: Veritabanına kaydet
             await _taskRepository.AddTaskAsync(newTask);
-
-            // After saving, fetch the task with ALL details including related entities
-            // Kaydettikten sonra, ilişkili entity'ler dahil TÜM detaylarla görevi çek
-            // This is necessary because the initial save doesn't include navigation properties (Store, User)
-            // Bu gereklidir çünkü ilk kayıt navigation property'leri (Store, User) içermez
-            var completeTask = await _taskRepository.GetTaskByIdAsync(newTask.Id);
-
-            // Step 3: Use our MapToDto method to return the complete object with all related data
-            // Adım 3: Tüm ilişkili verilerle birlikte tam objeyi döndürmek için MapToDto metodumuzu kullan
-            return MapToDto(completeTask);
+            var complete = await _taskRepository.GetTaskByIdAsync(newTask.Id);
+            return MapToDto(complete!);
         }
 
-        /// <summary>
-        /// Maps AuditTask entity to TaskDto with all related information
-        /// AuditTask entity'sini tüm ilişkili bilgilerle TaskDto'ya dönüştürür
-        /// </summary>
-        /// <param name="t">AuditTask entity / AuditTask entity'si</param>
-        /// <returns>TaskDto with complete information / Tam bilgilerle TaskDto</returns>
-        private TaskDto MapToDto(AuditTask t)
+        public async Task<bool> UpdateTaskAsync(
+            int id, UpdateTaskDto taskDto, int currentUserId, string userRole)
         {
-            return new TaskDto
-            {
-                // Task basic information
-                // Görev temel bilgileri
-                Id = t.Id,
-                StoreId = t.StoreId,
-                TaskType = t.TaskType.ToString(),
-                Priority = t.Priority.ToString(),
-                Status = t.Status.ToString(),
-                DueDate = t.DueDate,
-                Description = t.Description,
-
-                // Store related information (from navigation property)
-                // Mağaza ile ilgili bilgiler (navigation property'den)
-                StoreName = t.Store.Name,
-                StoreAddress = t.Store.Address,
-                Latitude = t.Store.Latitude,
-                Longitude = t.Store.Longitude,
-
-                // User related information (from navigation property)
-                // Kullanıcı ile ilgili bilgiler (navigation property'den)
-                AssigneeId = t.UserId,
-                AssigneeName = t.User.FullName
-            };
-        }
-
-        /// <summary>
-        /// Updates an existing task's information
-        /// Mevcut bir görevin bilgilerini günceller
-        /// </summary>
-        /// <param name="id">Task ID / Görev ID'si</param>
-        /// <param name="taskDto">Updated task data / Güncellenmiş görev verisi</param>
-        /// <param name="currentUserId">Requesting user ID / İsteği atan kullanıcı ID'si</param>
-        /// <param name="userRole">Requesting user Role / İsteği atan kullanıcı Rolü</param>
-        /// <returns>True if successful, false if task not found / Başarılıysa true, görev bulunamazsa false</returns>
-        public async Task<bool> UpdateTaskAsync(int id, UpdateTaskDto taskDto, int currentUserId, string userRole)
-        {
-            // Find task by ID
-            // Görevi ID ile bul
             var task = await _taskRepository.GetTaskByIdAsync(id);
             if (task == null) return false;
 
-            // --- GÜVENLİK VE İŞ MANTIĞI (BUSINESS LOGIC) ---
             if (userRole == "FIELD_WORKER")
             {
-                // Saha elemanı başkasının görevini güncelleyemez
-                if (task.UserId != currentUserId) // task.AssigneeId kullanıyorsan ona göre değiştir
+                if (task.UserId != currentUserId)
                     throw new UnauthorizedAccessException("You can only update your own tasks.");
 
-                // Saha elemanı mağaza, tarih vb. değiştiremesin diye gelen verileri eziyoruz
                 taskDto.StoreId = null;
                 taskDto.UserId = null;
                 taskDto.TaskType = null;
                 taskDto.Priority = null;
                 taskDto.DueDate = null;
             }
-            // ------------------------------------------------
 
-            // First, save the old status.
-            // Önce eski status'u sakla
             var oldStatus = task.Status;
 
-            // Update other fields (Partial Update - Sadece dolu gelenleri güncelle)
-            // Diğer alanları güncelle
             if (taskDto.StoreId.HasValue) task.StoreId = taskDto.StoreId.Value;
             if (taskDto.UserId.HasValue) task.UserId = taskDto.UserId.Value;
             if (taskDto.TaskType.HasValue) task.TaskType = taskDto.TaskType.Value;
             if (taskDto.Priority.HasValue) task.Priority = taskDto.Priority.Value;
             if (taskDto.DueDate.HasValue) task.DueDate = taskDto.DueDate.Value;
-
-            // Description string olduğu için null kontrolü yapıyoruz
             if (taskDto.Description != null) task.Description = taskDto.Description;
 
-            // Check if the status has changed.
-            // Status değişti mi kontrol et
             if (taskDto.Status.HasValue && oldStatus != taskDto.Status.Value)
             {
                 task.Status = taskDto.Status.Value;
-
-                if (task.Status == AuditTaskStatus.COMPLETED)
-                {
-                    task.CompletedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    task.CompletedAt = null;
-                }
+                task.CompletedAt = task.Status == AuditTaskStatus.COMPLETED
+                    ? DateTime.UtcNow : null;
             }
 
-            // Save changes to database
-            // Değişiklikleri veritabanına kaydet
             await _taskRepository.UpdateTaskAsync(task);
             return true;
         }
 
-
-        /// <summary>
-        /// Deletes a task from the system
-        /// Sistemden bir görevi siler
-        /// </summary>
-        /// <param name="id">Task ID / Görev ID'si</param>
-        /// <returns>True if successful, false if task not found / Başarılıysa true, görev bulunamazsa false</returns>
         public async Task<bool> DeleteTaskAsync(int id)
         {
-            // Find task by ID
-            // Görevi ID ile bul
             var task = await _taskRepository.GetTaskByIdAsync(id);
             if (task == null) return false;
-
-            // Delete task from database
-            // Görevi veritabanından sil
             await _taskRepository.DeleteTaskAsync(task);
             return true;
         }
+
+        private static TaskDto MapToDto(AuditTask t) => new()
+        {
+            Id = t.Id,
+            StoreId = t.StoreId,
+            StoreName = t.Store.Name,
+            StoreAddress = t.Store.Address,
+            Latitude = t.Store.Latitude,
+            Longitude = t.Store.Longitude,
+            TaskType = t.TaskType.ToString(),
+            Priority = t.Priority.ToString(),
+            Status = t.Status.ToString(),
+            DueDate = t.DueDate,
+            CompletedAt = t.CompletedAt,
+            Description = t.Description,
+            AssigneeId = t.UserId ?? 0,
+            AssigneeName = t.User?.FullName ?? string.Empty,
+            AuditId = t.Audit?.Id
+        };
     }
 }

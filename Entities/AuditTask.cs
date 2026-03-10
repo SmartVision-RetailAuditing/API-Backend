@@ -26,9 +26,8 @@ namespace ApiBackend.Entities
         // FK → User
         [Column("user_id")]
         [ForeignKey(nameof(User))]
-        public int UserId { get; set; }
-
-        public User User { get; set; } = null!;
+        public int? UserId { get; set; }
+        public User? User { get; set; }
 
         // FK → Store
         [Column("store_id")]
@@ -58,5 +57,11 @@ namespace ApiBackend.Entities
 
         [Column("description")]
         public string? Description { get; set; }
+
+
+        // Audit navigation property — bir task tamamlanınca audit oluşturulur
+        // [JsonIgnore] (döngüsel referans önlemek için)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public Audit? Audit { get; set; }
     }
 }
