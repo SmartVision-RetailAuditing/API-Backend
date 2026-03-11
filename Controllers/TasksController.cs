@@ -3,6 +3,7 @@ using ApiBackend.DTOs.TaskDtos;
 using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace ApiBackend.Controllers
@@ -30,8 +31,8 @@ namespace ApiBackend.Controllers
         // GET: api/tasks/my-tasks
         [HttpGet("my-tasks")]
         public async Task<ActionResult<PagedResult<TaskDto>>> GetMyTasks(
-            [FromQuery] int page = 1,
-            [FromQuery] int size = 10)
+            [FromQuery, Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, Range(1, 100)] int size = 10)
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
@@ -45,8 +46,8 @@ namespace ApiBackend.Controllers
         [HttpGet]
         [Authorize(Roles = "SUPERVISOR,ADMIN")]
         public async Task<ActionResult<PagedResult<TaskDto>>> GetAllTasks(
-            [FromQuery] int page = 1,
-            [FromQuery] int size = 10,
+            [FromQuery, Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, Range(1, 100)] int size = 10,
             [FromQuery] string? search = null,
             [FromQuery] string? status = null,
             [FromQuery] string? priority = null,
@@ -61,7 +62,7 @@ namespace ApiBackend.Controllers
         // GET: api/tasks/5
         [HttpGet("{id}")]
         [Authorize(Roles = "ADMIN,SUPERVISOR,FIELD_WORKER")]
-        public async Task<ActionResult<TaskDto>> GetTaskById(int id)
+        public async Task<ActionResult<TaskDto>> GetTaskById([Range(1, int.MaxValue)] int id)
         {
             var task = await _taskService.GetTaskByIdAsync(id);
             if (task == null) return NotFound(new { message = "Task not found." });
@@ -90,7 +91,9 @@ namespace ApiBackend.Controllers
         // PUT: api/tasks/5
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN,SUPERVISOR,FIELD_WORKER")]
-        public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDto request)
+        public async Task<IActionResult> UpdateTask(
+                [Range(1, int.MaxValue)] int id,
+                [FromBody] UpdateTaskDto request)
         {
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -111,7 +114,7 @@ namespace ApiBackend.Controllers
         // DELETE: api/tasks/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "SUPERVISOR,ADMIN")]
-        public async Task<IActionResult> DeleteTask(int id)
+        public async Task<IActionResult> DeleteTask([Range(1, int.MaxValue)] int id)
         {
             var result = await _taskService.DeleteTaskAsync(id);
             if (!result) return NotFound(new { message = "Task not found." });

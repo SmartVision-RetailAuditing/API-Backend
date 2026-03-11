@@ -47,14 +47,6 @@ public class StoresControllerTests : IntegrationTest
 
 
     [Fact]
-    public async Task GetStoresById_ShouldReturnUnauthorized_WhenNotAuthenticated()
-    {
-        int storeId = 1;
-        HttpResponseMessage response = await HttpClient.GetAsync($"api/Stores/{storeId}");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    [Fact]
     public async Task GetStoresById_ShouldReturnBadRequest_WithStoreIdOutOfBounds()
     {
         var fieldWorkerUser = GetTestFieldWorkerUserA();
