@@ -5,6 +5,7 @@ using ApiBackend.DTOs.UserDtos;
 using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace ApiBackend.Controllers
@@ -49,8 +50,8 @@ namespace ApiBackend.Controllers
         [HttpGet]
         [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<PagedResult<UserDto>>> GetAllUsers(
-            [FromQuery] int page = 1,
-            [FromQuery] int size = 10,
+            [FromQuery, Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, Range(1, 100)] int size = 10,
             [FromQuery] string? search = null,
             [FromQuery] string? role = null)
         {
@@ -61,7 +62,7 @@ namespace ApiBackend.Controllers
         // GET: api/users/5
         [HttpGet("{id}")]
         [Authorize(Roles = "ADMIN,SUPERVISOR")]
-        public async Task<ActionResult<UserDto>> GetUserById(int id)
+        public async Task<ActionResult<UserDto>> GetUserById([Range(1, int.MaxValue)] int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null) return NotFound(new { message = "User not found." });
@@ -91,7 +92,9 @@ namespace ApiBackend.Controllers
         // PUT: api/users/5
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto request)
+        public async Task<IActionResult> UpdateUser(
+                [Range(1, int.MaxValue)] int id,
+                [FromBody] UpdateUserDto request)
         {
             var result = await _userService.UpdateUserAsync(id, request);
             if (!result) return NotFound(new { message = "User not found." });
@@ -101,7 +104,7 @@ namespace ApiBackend.Controllers
         // PATCH: api/users/5/toggle-active  — soft delete toggle
         [HttpPatch("{id}/toggle-active")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> ToggleUserActive(int id)
+        public async Task<IActionResult> ToggleUserActive([Range(1, int.MaxValue)] int id)
         {
             var result = await _userService.ToggleUserActiveAsync(id);
             if (!result) return NotFound(new { message = "User not found." });
@@ -111,7 +114,9 @@ namespace ApiBackend.Controllers
         // PATCH: api/users/5/reset-password
         [HttpPatch("{id}/reset-password")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> AdminResetPassword(int id, [FromBody] AdminResetPasswordDto request)
+        public async Task<IActionResult> AdminResetPassword(
+                [Range(1, int.MaxValue)] int id,
+                [FromBody] AdminResetPasswordDto request)
         {
             var result = await _userService.AdminResetPasswordAsync(id, request.NewPassword);
             if (!result) return NotFound(new { message = "User not found." });

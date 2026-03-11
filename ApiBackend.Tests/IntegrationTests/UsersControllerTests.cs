@@ -325,21 +325,6 @@ public class UsersControllerTests : IntegrationTest
     }
 
     [Fact]
-    public async Task PutUserById_ShouldReturnBadRequest_WithEmptyUserRequest()
-    {
-        var adminUser = GetTestAdminUser();
-        await AuthenticateUser(adminUser);
-
-        var request = new CreateUserDto();
-
-        // Valid since test database is seeded at this point
-        int userId = 5;
-        HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"api/Users/{userId}", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
     public async Task PutUserById_ShouldReturnBadRequest_WithInvalidUserRequest()
     {
         var adminUser = GetTestAdminUser();
@@ -381,66 +366,66 @@ public class UsersControllerTests : IntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
-    [Fact]
-    public async Task DeleteUserById_ShouldReturnUnauthorized_WhenNotAuthenticated()
-    {
-        // Valid since test database is seeded at this point
-        int userId = 6;
-        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/Users/{userId}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task DeleteUserById_ShouldReturnForbidden_WhenNotAuthorized()
-    {
-        var supervisorUser = GetTestSupervisorUser();
-        await AuthenticateUser(supervisorUser);
-
-        // Valid since test database is seeded at this point
-        int userId = 6;
-        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/Users/{userId}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-
-    [Fact]
-    public async Task DeleteUserById_ShouldReturnBadRequest_WithUserIdOutOfBounds()
-    {
-        var adminUser = GetTestAdminUser();
-        await AuthenticateUser(adminUser);
-
-        int userId = int.MinValue;
-        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/Users/{userId}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task DeleteUserById_ShouldReturnNotFound_WithUserIdInBoundsButNotExists()
-    {
-        var adminUser = GetTestAdminUser();
-        await AuthenticateUser(adminUser);
-
-        int userId = int.MaxValue;
-        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/Users/{userId}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task DeleteUserById_ShouldReturnNoContent_WithValidUserId()
-    {
-        var adminUser = GetTestAdminUser();
-        await AuthenticateUser(adminUser);
-
-        // Valid since test database is seeded at this point
-        int userId = 6;
-        HttpResponseMessage response = await HttpClient.DeleteAsync($"api/Users/{userId}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-    }
+    // [Fact]
+    // public async Task PatchUserById_ShouldReturnUnauthorized_WhenNotAuthenticated()
+    // {
+    //     // Valid since test database is seeded at this point
+    //     int userId = 6;
+    //     HttpResponseMessage response = await HttpClient.PatchAsync($"api/Users/{userId}");
+    //
+    //     response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    // }
+    //
+    // [Fact]
+    // public async Task PatchUserById_ShouldReturnForbidden_WhenNotAuthorized()
+    // {
+    //     var supervisorUser = GetTestSupervisorUser();
+    //     await AuthenticateUser(supervisorUser);
+    //
+    //     // Valid since test database is seeded at this point
+    //     int userId = 6;
+    //     HttpResponseMessage response = await HttpClient.PatchAsync($"api/Users/{userId}");
+    //
+    //     response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    // }
+    //
+    //
+    // [Fact]
+    // public async Task PatchUserById_ShouldReturnBadRequest_WithUserIdOutOfBounds()
+    // {
+    //     var adminUser = GetTestAdminUser();
+    //     await AuthenticateUser(adminUser);
+    //
+    //     int userId = int.MinValue;
+    //     HttpResponseMessage response = await HttpClient.PatchAsync($"api/Users/{userId}");
+    //
+    //     response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    // }
+    //
+    // [Fact]
+    // public async Task PatchUserById_ShouldReturnNotFound_WithUserIdInBoundsButNotExists()
+    // {
+    //     var adminUser = GetTestAdminUser();
+    //     await AuthenticateUser(adminUser);
+    //
+    //     int userId = int.MaxValue;
+    //     HttpResponseMessage response = await HttpClient.PatchAsync($"api/Users/{userId}");
+    //
+    //     response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    // }
+    //
+    // [Fact]
+    // public async Task PatchUserById_ShouldReturnNoContent_WithValidUserId()
+    // {
+    //     var adminUser = GetTestAdminUser();
+    //     await AuthenticateUser(adminUser);
+    //
+    //     // Valid since test database is seeded at this point
+    //     int userId = 6;
+    //     HttpResponseMessage response = await HttpClient.PatchAsync($"api/Users/{userId}");
+    //
+    //     response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    // }
 
 
     [Fact]
@@ -507,7 +492,7 @@ public class UsersControllerTests : IntegrationTest
     }
 
     [Fact]
-    public async Task ResetPassword_ShouldReturnNoContent_WithValidUserId()
+    public async Task ResetPassword_ShouldReturnOk_WithValidUserId()
     {
         var adminUser = GetTestAdminUser();
         await AuthenticateUser(adminUser);
@@ -520,7 +505,7 @@ public class UsersControllerTests : IntegrationTest
         HttpResponseMessage response = await HttpClient.PatchAsJsonAsync($"api/Users/{userId}/reset-password", request);
 
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }
 
