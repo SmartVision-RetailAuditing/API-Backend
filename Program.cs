@@ -1,17 +1,11 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ApiBackend.Data;
-// using ApiBackend.Services; 
-//using ApiBackend.Models;
-//using ApiBackend.Models.Context;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-// Gets appsettings.<ENVIRONMENT>.json file's "DefaultConnection"
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 
 // 1. Repositories (Data Access Layer) Injection
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IUserRepository, ApiBackend.Repositories.Impl.UserRepository>();
@@ -21,21 +15,22 @@ builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditRepository, 
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditProductRepository, ApiBackend.Repositories.Impl.AuditProductRepository>();
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditIssueRepository, ApiBackend.Repositories.Impl.AuditIssueRepository>();
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IDashboardRepository, ApiBackend.Repositories.Impl.DashboardRepository>();
-
-
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAnalyticsRepository, ApiBackend.Repositories.Impl.AnalyticsRepository>();
+builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.INotificationRepository, ApiBackend.Repositories.Impl.NotificationRepository>();
 
 // 2. Services (Business Logic Layer) Injection
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuthService, ApiBackend.Services.Impl.AuthService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IUserService, ApiBackend.Services.Impl.UserService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.ITaskService, ApiBackend.Services.Impl.TaskService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IStoreService, ApiBackend.Services.Impl.StoreService>();
-builder.Services.AddScoped<ApiBackend.Services.Interfaces.IUserService, ApiBackend.Services.Impl.UserService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditService, ApiBackend.Services.Impl.AuditService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditProductService, ApiBackend.Services.Impl.AuditProductService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditIssueService, ApiBackend.Services.Impl.AuditIssueService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IDashboardService, ApiBackend.Services.Impl.DashboardService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAnalyticsService, ApiBackend.Services.Impl.AnalyticsService>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.INotificationService, ApiBackend.Services.Impl.NotificationService>();
 
 builder.Services.AddControllers();
-
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -60,16 +55,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
-
 // Swagger API Documentation
 builder.Services.AddEndpointsApiExplorer();
-
-// Add Authorization Support to Swagger
 builder.Services.AddSwaggerGen(option =>
 {
     option.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "SmartVision API", Version = "v1" });
-
     option.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
@@ -79,7 +69,6 @@ builder.Services.AddSwaggerGen(option =>
         BearerFormat = "JWT",
         Scheme = "Bearer"
     });
-
     option.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -96,59 +85,66 @@ builder.Services.AddSwaggerGen(option =>
     });
 });
 
-
-// React frontend'inin adresi
-var frontendUrl = "http://localhost:5173";
-
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins(frontendUrl) // Sadece bu adrese izin ver
-              .AllowAnyHeader()         // T�m HTTP ba�l�klar�na (Authorization vs.) izin ver
-              .AllowAnyMethod()         // T�m metotlara (GET, POST, PUT, DELETE) izin ver
-              .AllowCredentials();      // Cookie veya token ile kimlik do�rulama i�in gerekli
+        policy
+            .WithOrigins(
+                "http://localhost:5173",                                                          // Local dev
+                "https://smartvisionbackend-d4bfdra8f4b6gmad.swedencentral-01.azurewebsites.net" // Azure frontend
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
+// ── Otomatik Migration ────────────────────────────────────────────────────────
+// Her deploy'da pending migration'ları uygular — idempotent, güvenli
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var pending = db.Database.GetPendingMigrations().ToList();
 
-// Checks 'ASPNETCORE_Environment' Environment Variable can be set from Properties/launchProfiles.json
+        if (pending.Any())
+        {
+            logger.LogInformation("Applying {Count} pending migration(s): {Migrations}",
+                pending.Count, string.Join(", ", pending));
+            db.Database.Migrate();
+            logger.LogInformation("Migrations applied successfully.");
+        }
+        else
+        {
+            logger.LogInformation("Database is up to date, no migrations needed.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Migration failed. Application will continue but DB may be out of date.");
+        // Throw etmiyoruz — migration hatası uygulamayı çökertmesin,
+        // log'dan takip edilir
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    // Seed database(dummy data)
-    // using (var scope = app.Services.CreateScope())
-    // {
-    //     var services = scope.ServiceProvider;
-    //     try
-    //     {
-    //         var context = services.GetRequiredService<AppDbContext>();
-    //         context.Database.Migrate();
-    //         await DbInitializer.SeedDevData(context);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         var logger = services.GetRequiredService<ILogger<Program>>();
-    //         logger.LogError(ex, "Database couldn't seed");
-    //     }
-    // }
 }
 
-
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
-app.UseCors("AllowReactApp"); // �smine yukar�da ne verdiysen o olmal�
-
+app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
 
 public partial class Program { } //To make app accessible from ApiBackend.Tests 
