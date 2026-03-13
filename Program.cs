@@ -33,12 +33,10 @@ builder.Services.AddScoped<ApiBackend.Services.Interfaces.INotificationService, 
 // ── AI Pipeline servisleri ───────────────────────────────────────────────────
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.ICloudStorageService, ApiBackend.Services.Impl.CloudStorageService>();
 // AIVisionService için named HttpClient — timeout 90 saniye (AI işlem süresi)
-// GERÇEK (Python hazır olunca buna dön):
+// (Python hazır olunca çalışacak):
 builder.Services.AddHttpClient<ApiBackend.Services.Interfaces.IAIVisionService, ApiBackend.Services.Impl.AIVisionService>(client => {
     client.Timeout = TimeSpan.FromSeconds(90);
 });
-// ŞİMDİLİK MOCK:
-builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAIVisionService, ApiBackend.Services.Impl.MockAIVisionService>(); // ŞİMDİLİK MOCK:
 builder.Services.AddScoped<ApiBackend.Mappers.AiResponseMapper>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditSubmissionService, ApiBackend.Services.Impl.AuditSubmissionService>();
 
