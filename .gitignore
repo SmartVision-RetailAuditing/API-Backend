@@ -1,4 +1,4 @@
-# =========================
+﻿# =========================
 # Build outputs
 # =========================
 bin/
@@ -36,8 +36,9 @@ Thumbs.db
 # Environment / secrets
 # =========================
 
-# Local secrets ONLY
+# =========================
+# Secrets — NEVER commit these
+# =========================
 appsettings.Development.json
-appsettings.Acceptance.json
-appsettings.Main.json
-appsettings.Local.json
+# appsettings.json        → commit edilir (içi boş şablon)
+# appsettings.example.json → commit edilir (açıklamalı şablon)

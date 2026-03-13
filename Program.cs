@@ -30,6 +30,16 @@ builder.Services.AddScoped<ApiBackend.Services.Interfaces.IDashboardService, Api
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAnalyticsService, ApiBackend.Services.Impl.AnalyticsService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.INotificationService, ApiBackend.Services.Impl.NotificationService>();
 
+// ── AI Pipeline servisleri ───────────────────────────────────────────────────
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.ICloudStorageService, ApiBackend.Services.Impl.CloudStorageService>();
+// AIVisionService için named HttpClient — timeout 90 saniye (AI işlem süresi)
+// (Python hazır olunca çalışacak):
+builder.Services.AddHttpClient<ApiBackend.Services.Interfaces.IAIVisionService, ApiBackend.Services.Impl.AIVisionService>(client => {
+    client.Timeout = TimeSpan.FromSeconds(90);
+});
+builder.Services.AddScoped<ApiBackend.Mappers.AiResponseMapper>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditSubmissionService, ApiBackend.Services.Impl.AuditSubmissionService>();
+
 builder.Services.AddControllers();
 
 // JWT Authentication
@@ -86,15 +96,20 @@ builder.Services.AddSwaggerGen(option =>
 });
 
 // CORS
+// Development: "http://localhost:5173"
+// Production:  "http://localhost:5173,https://smartvision.azurewebsites.net"
+var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]
+    ?? "http://localhost:5173";
+
+var origins = allowedOrigins
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",                                                          // Local dev
-                "https://smartvisionbackend-d4bfdra8f4b6gmad.swedencentral-01.azurewebsites.net" // Azure frontend
-            )
+            .WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
