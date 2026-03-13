@@ -4,7 +4,9 @@ using System.Text.Json.Serialization;
 
 namespace ApiBackend.Entities
 {
-    public enum IssueSeverity { LOW, MEDIUM, CRITICAL }
+    // HIGH eklendi — sözleşme ihlali var ama henüz kritik değil durumu için
+    public enum IssueSeverity { LOW, MEDIUM, HIGH, CRITICAL }
+
     public enum IssueType
     {
         MISSING_PRODUCT,
@@ -39,6 +41,6 @@ namespace ApiBackend.Entities
 
         [Required]
         [Column("description")]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
     }
 }

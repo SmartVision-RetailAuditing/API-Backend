@@ -9,10 +9,12 @@ namespace ApiBackend.Services.Impl
     public class AuditService : IAuditService
     {
         private readonly IAuditRepository _auditRepository;
+        private readonly ICloudStorageService _storageService;
 
-        public AuditService(IAuditRepository auditRepository)
+        public AuditService(IAuditRepository auditRepository, ICloudStorageService storageService)
         {
             _auditRepository = auditRepository;
+            _storageService = storageService;
         }
 
         public async Task<PagedResult<AuditDto>> GetAllAuditsAsync(
@@ -21,7 +23,6 @@ namespace ApiBackend.Services.Impl
             string? search = null,
             string? status = null)
         {
-            // Projection artık repository'de yapılıyor — service sadece iletir
             return await _auditRepository.GetAuditsAsync(pageNumber, pageSize, search, status);
         }
 
@@ -29,7 +30,18 @@ namespace ApiBackend.Services.Impl
         {
             var audit = await _auditRepository.GetAuditByIdAsync(id);
             if (audit == null) return null;
-            return MapToDto(audit);
+
+            var dto = MapToDto(audit);
+
+            // Ham URL varsa → 24 saatlik SAS URL üret, frontend bunu kullanır
+            if (!string.IsNullOrEmpty(audit.ImageUrl))
+            {
+                dto.ImageUrl = _storageService.GenerateSasUrl(
+                    audit.ImageUrl,
+                    TimeSpan.FromHours(24));
+            }
+
+            return dto;
         }
 
         public async Task<AuditDto> CreateAuditAsync(CreateAuditDto dto)
@@ -56,11 +68,11 @@ namespace ApiBackend.Services.Impl
             var audit = await _auditRepository.GetAuditByIdAsync(id);
             if (audit == null) return false;
 
-            if (dto.ImageUrl != null) audit.ImageUrl = dto.ImageUrl;
-            if (dto.CaptureDate.HasValue) audit.CaptureDate = dto.CaptureDate.Value;
-            if (dto.ComplianceScore.HasValue) audit.ComplianceScore = dto.ComplianceScore.Value;
+            if (dto.ImageUrl != null)              audit.ImageUrl             = dto.ImageUrl;
+            if (dto.CaptureDate.HasValue)          audit.CaptureDate          = dto.CaptureDate.Value;
+            if (dto.ComplianceScore.HasValue)      audit.ComplianceScore      = dto.ComplianceScore.Value;
             if (dto.ShelfSharePercentage.HasValue) audit.ShelfSharePercentage = dto.ShelfSharePercentage.Value;
-            if (dto.Status.HasValue) audit.Status = dto.Status.Value;
+            if (dto.Status.HasValue)               audit.Status               = dto.Status.Value;
             if (dto.BrandDistributionJson != null) audit.BrandDistributionJson = dto.BrandDistributionJson;
 
             await _auditRepository.UpdateAuditAsync(audit);
@@ -76,8 +88,10 @@ namespace ApiBackend.Services.Impl
             return true;
         }
 
-        // GetAuditByIdAsync için — navigation property'ler Include ile geliyor
-        private AuditDto MapToDto(Audit a) => new AuditDto
+        // ── Mapper ───────────────────────────────────────────────────────────
+        // Not: ImageUrl burada ham URL olarak map edilir.
+        // GetAuditByIdAsync SAS URL ile override eder.
+        private static AuditDto MapToDto(Audit a) => new AuditDto
         {
             Id = a.Id,
             TaskId = a.TaskId,

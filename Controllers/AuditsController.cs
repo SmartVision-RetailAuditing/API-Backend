@@ -4,19 +4,23 @@ using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ApiBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "ADMIN,SUPERVISOR")] // Web panelinden sadece yöneticiler erişebilir
+    [Authorize(Roles = "ADMIN,SUPERVISOR,FIELD_WORKER")] // Web panelinden sadece yöneticiler erişebilir
     public class AuditsController : ControllerBase
     {
         private readonly IAuditService _auditService;
+        private readonly IAuditSubmissionService _submissionService;
 
-        public AuditsController(IAuditService auditService)
+
+        public AuditsController(IAuditService auditService, IAuditSubmissionService submissionService)
         {
             _auditService = auditService;
+            _submissionService = submissionService;
         }
 
         // GET: api/audits?page=1&size=10&search=migros&status=WARNING
@@ -66,5 +70,46 @@ namespace ApiBackend.Controllers
             if (!result) return NotFound(new { message = "Audit not found." });
             return NoContent();
         }
+
+
+        // POST: api/Audits/submit
+        [HttpPost("submit")]
+        [Authorize(Roles = "FIELD_WORKER")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> SubmitAuditTask([FromForm] SubmitAuditRequest request)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            if (request.Image == null || request.Image.Length == 0)
+                return BadRequest(new { message = "Fotoğraf zorunludur." });
+
+            try
+            {
+                var result = await _submissionService.ProcessAuditAsync(
+                    request.Image, request.TaskId, userId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, new { message = $"Harici servis hatası: {ex.Message}" });
+            }
+        }
+
+
+
     }
 }
