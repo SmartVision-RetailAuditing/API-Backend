@@ -16,9 +16,9 @@ namespace ApiBackend.Repositories.Impl
             int pageNumber,
             int pageSize,
             string? search = null,
-            string? status = null)
+            string? status = null,
+            int? storeId = null)          // ← YENİ
         {
-            // IQueryable — henüz DB'ye sorgu atmıyor
             var query = _context.Audits
                 .Include(a => a.Store)
                 .Include(a => a.User)
@@ -27,31 +27,30 @@ namespace ApiBackend.Repositories.Impl
                 .Include(a => a.Issues)
                 .AsQueryable();
 
-            // Search filtresi: StoreName veya AuditorName içinde arama
+            // StoreId filtresi — Store detail sayfasından gelince sadece o mağazanın auditleri
+            if (storeId.HasValue)
+                query = query.Where(a => a.StoreId == storeId.Value);
+
+            // Search filtresi
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var lower = search.ToLower();
                 query = query.Where(a =>
                     a.Store.Name.ToLower().Contains(lower) ||
-                    a.User.FullName.ToLower().Contains(lower)
-                );
+                    a.User.FullName.ToLower().Contains(lower));
             }
 
             // Status filtresi
             if (!string.IsNullOrWhiteSpace(status))
             {
                 if (Enum.TryParse<AuditStatus>(status.ToUpper(), out var parsedStatus))
-                {
                     query = query.Where(a => a.Status == parsedStatus);
-                }
             }
 
-            // Toplam sayıyı al (pagination için) — tek COUNT sorgusu
             var totalCount = await query.CountAsync();
 
-            // Sadece ihtiyaç duyulan alanları SELECT et (IQueryable projection)
             var data = await query
-                .OrderByDescending(a => a.CaptureDate)
+                .OrderByDescending(a => a.CaptureDate)   // Yeniden eskiye
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(a => new AuditDto

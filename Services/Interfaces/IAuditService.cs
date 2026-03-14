@@ -9,7 +9,8 @@ namespace ApiBackend.Services.Interfaces
             int pageNumber,
             int pageSize,
             string? search = null,
-            string? status = null
+            string? status = null,
+            int? storeId = null
         );
         Task<AuditDto?> GetAuditByIdAsync(int id);
         Task<AuditDto> CreateAuditAsync(CreateAuditDto createDto);

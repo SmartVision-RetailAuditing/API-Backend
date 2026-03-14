@@ -11,7 +11,8 @@ namespace ApiBackend.Repositories.Interfaces
             int pageNumber,
             int pageSize,
             string? search = null,
-            string? status = null
+            string? status = null,
+            int? storeId = null
         );
 
         Task<Audit?> GetAuditByIdAsync(int id);
