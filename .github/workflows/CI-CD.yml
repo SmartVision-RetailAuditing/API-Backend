@@ -23,6 +23,10 @@ jobs:
       run: dotnet build --no-restore
     
     - name: Run Integration Tests
+      env:
+          JwtSettings__Key: ${{ secrets.JWT_TEST_KEY }}
+          JwtSettings__Issuer: ${{ secrets.JWT_TEST_ISSUER }}
+          JwtSettings__Audience: ${{ secrets.JWT_TEST_AUDIENCE }}
       run: dotnet test --no-build --verbosity normal
 
   build-and-deploy:
