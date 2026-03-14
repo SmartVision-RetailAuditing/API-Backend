@@ -12,9 +12,9 @@ namespace ApiBackend.Services.Impl
 
         public CloudStorageService(IConfiguration configuration)
         {
-            _connectionString = configuration["AzureBlobStorage:ConnectionString"]
+            _connectionString = configuration["AzureBlobStorag:ConnectionString"]
                 ?? throw new InvalidOperationException("AzureBlobStorage:ConnectionString is missing.");
-            _containerName = configuration["AzureBlobStorage:ContainerName"]
+            _containerName = configuration["AzureBlobStorag:ContainerName"]
                 ?? throw new InvalidOperationException("AzureBlobStorage:ContainerName is missing.");
         }
 
