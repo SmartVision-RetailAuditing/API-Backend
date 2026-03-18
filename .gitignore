@@ -42,3 +42,5 @@ Thumbs.db
 appsettings.Development.json
 # appsettings.json        → commit edilir (içi boş şablon)
 # appsettings.example.json → commit edilir (açıklamalı şablon)
+
+
