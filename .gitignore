@@ -39,5 +39,6 @@ Thumbs.db
 # =========================
 # Secrets — NEVER commit these
 # =========================
-**/appsettings.Development.json
-**/appsettings.json
+appsettings.Development.json
+# appsettings.json        → commit edilir (içi boş şablon)
+# appsettings.example.json → commit edilir (açıklamalı şablon)
