@@ -1,8 +1,9 @@
-using ApiBackend.DTOs.AuditDtos;
+using ApiBackend.Entities;
 
-namespace ApiBackend.Services.Interfaces;
-
-public interface IShelfComplianceService
+namespace ApiBackend.Services.Interfaces
 {
-    void EvaluateRules(AiVisionResultDto aiResult);
+    public interface IShelfComplianceRuleService
+    {
+        (List<AuditIssue> Issues, decimal Score, decimal ShelfShare, string? BrandDistJson) EvaluateRules(List<AuditProduct> products);
+    }
 }

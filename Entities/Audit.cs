@@ -37,9 +37,13 @@ namespace ApiBackend.Entities
         [JsonIgnore]
         public User User { get; set; } = null!;
 
-        [Required]
-        [Column("image_url")]
-        public string? ImageUrl { get; set; }
+        
+        [Column("pre_image_url")]
+        public string? PreImageUrl { get; set; }
+        
+        
+        [Column("post_image_url")]
+        public string? PostImageUrl { get; set; }
 
         [Required]
         [Column("capture_date")]

@@ -1,109 +1,83 @@
-using ApiBackend.DTOs.AuditDtos;
+using System.Text.Json;
 using ApiBackend.Entities;
 using ApiBackend.Services.Interfaces;
 
 namespace ApiBackend.Services.Impl
 {
-    public class ShelfComplianceService : IShelfComplianceService
+    public class ShelfComplianceRuleService : IShelfComplianceRuleService
     {
-        public void EvaluateRules(AiVisionResultDto aiResult)
+        private const string OwnBrand = "PINAR";
+
+        public (List<AuditIssue> Issues, decimal Score, decimal ShelfShare, string? BrandDistJson) EvaluateRules(List<AuditProduct> products)
         {
-            aiResult.Issues ??= new List<AiIssueDto>();
-
-            var totalProducts = aiResult.Products?.Count ?? 0;
-            if (totalProducts == 0)
-            {
-                aiResult.ComplianceScore = 0;
-                return;
-            }
-
-            // --- KURAL 1: MARKA RAF PAYI (Örn: PINAR en az %60 olmalı) ---
-            var targetBrand = "PINAR";
-            var brandCount = aiResult.Products!.Count(p => p.BrandName.Equals(targetBrand, StringComparison.OrdinalIgnoreCase));
-            var brandShare = (decimal)brandCount / totalProducts * 100;
-            
-            aiResult.ShelfSharePercentage = brandShare;
-
-            if (brandShare < 60.0m)
-            {
-                aiResult.Issues.Add(new AiIssueDto
-                {
-                    IssueType = IssueType.LOW_SHELF_SHARE.ToString(),
-                    Severity = IssueSeverity.HIGH.ToString(),
-                    Description = $"{targetBrand} raf payı %{brandShare:F1} — sözleşme minimumu %60'ın altında."
-                });
-            }
-
-            // --- ÜRÜN BAZLI KURALLAR ---
-            bool isMustHaveProductFound = false;
-
-            foreach (var product in aiResult.Products!)
-            {
-                // KURAL 2: FİYAT KONTROLÜ
-                if (product.ProductCode == "153106322" && (product.Price > 50.0m || product.Price < 30.0m))
-                {
-                    aiResult.Issues.Add(new AiIssueDto
-                    {
-                        IssueType = IssueType.WRONG_PRICE.ToString(),
-                        Severity = IssueSeverity.HIGH.ToString(),
-                        Description = $"{product.BrandName} ({product.ProductCode}) fiyatı {product.Price} TL. Beklenen aralığın (30-50 TL) dışında!"
-                    });
-                }
-
-                // KURAL 3: RAF POZİSYONU (Örn: Tam yağlı sütler göz hizasında olmalı)
-                bool isPremiumProduct = product.ProductName?.Contains("Tam Yağlı") == true;
-                if (isPremiumProduct && !product.IsEyeLevel)
-                {
-                    aiResult.Issues.Add(new AiIssueDto
-                    {
-                        IssueType = IssueType.WRONG_SHELF_POSITION.ToString(),
-                        Severity = IssueSeverity.MEDIUM.ToString(),
-                        Description = $"{product.ProductName} premium bir ürün ve göz hizasında olmalı. Ancak raf {product.ShelfPosition} olarak tespit edildi."
-                    });
-                }
-
-                // Zorunlu ürün tespiti için kontrol
-                if (product.ProductCode == "153107682")
-                {
-                    isMustHaveProductFound = true;
-                }
-            }
-
-            // --- KURAL 4: EKSİK ÜRÜN KONTROLÜ (MISSING PRODUCT) ---
-            if (!isMustHaveProductFound)
-            {
-                aiResult.Issues.Add(new AiIssueDto
-                {
-                    IssueType = IssueType.MISSING_PRODUCT.ToString(),
-                    Severity = IssueSeverity.CRITICAL.ToString(),
-                    Description = "Sözleşme gereği zorunlu olan '153107682' kodlu ürün rafta bulunamadı!"
-                });
-            }
-
-            // --- SKOR HESAPLAMA ---
-            aiResult.ComplianceScore = CalculateComplianceScore(aiResult.Issues);
-        }
-
-        private decimal CalculateComplianceScore(List<AiIssueDto> issues)
-        {
+            var issues = new List<AuditIssue>();
             decimal score = 100.0m;
 
-            foreach (var issue in issues)
+            if (!products.Any()) return (issues, 0m, 0m, null);
+
+            // --- 1. Raf Payı Hesabı ---
+            var ownCount = products.Count(p => p.BrandName.Equals(OwnBrand, StringComparison.OrdinalIgnoreCase));
+            var shelfShare = Math.Round((decimal)ownCount / products.Count * 100, 1);
+
+            if (shelfShare < 60.0m)
             {
-                if (Enum.TryParse<IssueSeverity>(issue.Severity, out var severity))
+                issues.Add(new AuditIssue { IssueType = IssueType.LOW_SHELF_SHARE, Severity = IssueSeverity.HIGH, Description = $"{OwnBrand} raf payı %{shelfShare:F1} — sözleşme minimumu %60'ın altında." });
+                score -= 15.0m;
+            }
+
+            // --- 2. Ürün Bazlı Kurallar (Fiyat, Raf Konumu vb.) ---
+            bool isMustHaveProductFound = false;
+
+            foreach (var p in products)
+            {
+                // Zorunlu ürün kontrolü
+                if (p.ProductCode == "153107682") isMustHaveProductFound = true;
+
+                // KURAL: FİYAT KONTROLÜ (Nokta atışı tek fiyat beklentisi)
+                decimal expectedPrice = 45.90m; // Sözleşmedeki sabit fiyat (Örnek: 45.90 TL)
+                
+                if (p.ProductCode == "153106322" && p.Price != expectedPrice)
                 {
-                    score -= severity switch
+                    // Açıklamayı da çok daha profesyonel hale getirdik
+                    var desc = $"{p.ProductName} fiyatı hatalı! Raftaki: {p.Price} TL, Olması Gereken: {expectedPrice} TL.";
+                    
+                    // AYNI İHLAL DAHA ÖNCE EKLENMEDİYSE EKLE (Mükerrer kaydı önler)
+                    if (!issues.Any(i => i.IssueType == IssueType.WRONG_PRICE && i.Description == desc))
                     {
-                        IssueSeverity.CRITICAL => 25.0m,
-                        IssueSeverity.HIGH => 15.0m,
-                        IssueSeverity.MEDIUM => 5.0m,
-                        IssueSeverity.LOW => 2.0m,
-                        _ => 0.0m
-                    };
+                        issues.Add(new AuditIssue { IssueType = IssueType.WRONG_PRICE, Severity = IssueSeverity.HIGH, Description = desc });
+                        score -= 15.0m; // Cezayı sadece 1 kere kes!
+                    }
+                }
+
+                // KURAL: RAF POZİSYONU KONTROLÜ
+                if (p.ProductName.Contains("Tam Yağlı") && !p.IsEyeLevel)
+                {
+                    var desc = $"{p.ProductName} premium bir ürün ve göz hizasında olmalı.";
+                    
+                    // AYNI İHLAL DAHA ÖNCE EKLENMEDİYSE EKLE
+                    if (!issues.Any(i => i.IssueType == IssueType.WRONG_SHELF_POSITION && i.Description == desc))
+                    {
+                        issues.Add(new AuditIssue { IssueType = IssueType.WRONG_SHELF_POSITION, Severity = IssueSeverity.MEDIUM, Description = desc });
+                        score -= 5.0m;
+                    }
                 }
             }
 
-            return score < 0 ? 0 : score;
+            // --- 3. Eksik Ürün ---
+            if (!isMustHaveProductFound)
+            {
+                issues.Add(new AuditIssue { IssueType = IssueType.MISSING_PRODUCT, Severity = IssueSeverity.CRITICAL, Description = "Sözleşme gereği zorunlu olan '153107682' kodlu ürün rafta bulunamadı!" });
+                score -= 25.0m;
+            }
+
+            score = score < 0 ? 0 : score;
+
+            // --- 4. Marka Dağılım JSON'u ---
+            var total = (double)products.Count;
+            var distribution = products.GroupBy(p => p.BrandName)
+                                       .ToDictionary(g => g.Key, g => Math.Round(g.Count() / total * 100, 1));
+            
+            return (issues, score, shelfShare, JsonSerializer.Serialize(distribution));
         }
     }
 }

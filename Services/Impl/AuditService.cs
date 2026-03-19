@@ -34,8 +34,8 @@ namespace ApiBackend.Services.Impl
 
             var dto = MapToDto(audit);
 
-            if (!string.IsNullOrEmpty(audit.ImageUrl))
-                dto.ImageUrl = _storageService.GenerateSasUrl(audit.ImageUrl, TimeSpan.FromHours(24));
+            if (!string.IsNullOrEmpty(audit.PreImageUrl))
+                dto.PreImageUrl = _storageService.GenerateSasUrl(audit.PreImageUrl, TimeSpan.FromHours(24));
 
             return dto;
         }
@@ -47,7 +47,8 @@ namespace ApiBackend.Services.Impl
                 TaskId = dto.TaskId,
                 StoreId = dto.StoreId,
                 UserId = dto.UserId,
-                ImageUrl = dto.ImageUrl,
+                PreImageUrl = dto.PreImageUrl,
+                PostImageUrl = dto.PostImageUrl,
                 CaptureDate = dto.CaptureDate,
                 ComplianceScore = dto.ComplianceScore,
                 ShelfSharePercentage = dto.ShelfSharePercentage,
@@ -63,7 +64,8 @@ namespace ApiBackend.Services.Impl
             var audit = await _auditRepository.GetAuditByIdAsync(id);
             if (audit == null) return false;
 
-            if (dto.ImageUrl != null) audit.ImageUrl = dto.ImageUrl;
+            if (dto.PreImageUrl != null) audit.PreImageUrl = dto.PreImageUrl;
+            if (dto.PostImageUrl != null) audit.PostImageUrl = dto.PostImageUrl;
             if (dto.CaptureDate.HasValue) audit.CaptureDate = dto.CaptureDate.Value;
             if (dto.ComplianceScore.HasValue) audit.ComplianceScore = dto.ComplianceScore.Value;
             if (dto.ShelfSharePercentage.HasValue) audit.ShelfSharePercentage = dto.ShelfSharePercentage.Value;
@@ -91,7 +93,8 @@ namespace ApiBackend.Services.Impl
             StoreName = a.Store?.Name ?? string.Empty,
             AuditorName = a.User?.FullName ?? string.Empty,
             TaskType = a.Task?.TaskType.ToString() ?? string.Empty,
-            ImageUrl = a.ImageUrl,
+            PreImageUrl = a.PreImageUrl,
+            PostImageUrl = a.PostImageUrl,
             CaptureDate = a.CaptureDate,
             ComplianceScore = a.ComplianceScore,
             ShelfSharePercentage = a.ShelfSharePercentage,

@@ -15,7 +15,11 @@ namespace ApiBackend.DTOs.AuditDtos
         public int UserId { get; set; }
 
         [Required]
-        public string? ImageUrl { get; set; } // Sütun Required ama formdan string null/boş gelebileceği için validation'a takılsın diye ? bırakılır
+        public string? PreImageUrl { get; set; } // Sütun Required ama formdan string null/boş gelebileceği için validation'a takılsın diye ? bırakılır
+        
+        [Required]
+        public string? PostImageUrl { get; set; } // Sütun Required ama formdan string null/boş gelebileceği için validation'a takılsın diye ? bırakılır
+
 
         [Required]
         public DateTime CaptureDate { get; set; }

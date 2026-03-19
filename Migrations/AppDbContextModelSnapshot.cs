@@ -43,10 +43,13 @@ namespace ApiBackend.Migrations
                         .HasColumnType("numeric")
                         .HasColumnName("compliance_score");
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
+                    b.Property<string>("PostImageUrl")
                         .HasColumnType("text")
-                        .HasColumnName("image_url");
+                        .HasColumnName("post_image_url");
+
+                    b.Property<string>("PreImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("pre_image_url");
 
                     b.Property<decimal>("ShelfSharePercentage")
                         .HasColumnType("numeric")

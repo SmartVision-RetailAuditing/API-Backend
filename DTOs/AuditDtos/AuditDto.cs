@@ -12,7 +12,8 @@
         public string AuditorName { get; set; } = string.Empty;
         public string TaskType { get; set; } = string.Empty;
 
-        public string? ImageUrl { get; set; }
+        public string? PreImageUrl { get; set; }
+        public string? PostImageUrl { get; set; }
         public DateTime CaptureDate { get; set; }
         public decimal ComplianceScore { get; set; }
         public decimal ShelfSharePercentage { get; set; }
