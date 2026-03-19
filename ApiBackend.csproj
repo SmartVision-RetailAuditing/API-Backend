@@ -31,4 +31,9 @@
         <Compile Remove="ApiBackend.Tests/**/*.cs" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="ApiBackend.Tests\" />
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
 </Project>
