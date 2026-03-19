@@ -7,6 +7,6 @@ namespace ApiBackend.Services.Interfaces
         /// <summary>
         /// Blob URL'ini Python AI servisine gönderir, analiz sonucunu döner.
         /// </summary>
-        Task<AiVisionResultDto> AnalyzeShelfAsync(string imageUrl);
+        Task<AiVisionResultDto> AnalyzeShelfAsync(IFormFile image);
     }
 }

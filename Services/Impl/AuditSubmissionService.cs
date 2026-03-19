@@ -1,4 +1,4 @@
-﻿using ApiBackend.Data;
+﻿using ApiBackend.Data; // Kendi DbContext namespace'ini yaz
 using ApiBackend.DTOs.AuditDtos;
 using ApiBackend.Entities;
 using ApiBackend.Mappers;
@@ -13,59 +13,64 @@ namespace ApiBackend.Services.Impl
         private readonly IAIVisionService _aiVisionService;
         private readonly AiResponseMapper _mapper;
         private readonly AppDbContext _context;
+        private readonly IShelfComplianceRuleService _ruleEngine;
 
         public AuditSubmissionService(
             ICloudStorageService storageService,
             IAIVisionService aiVisionService,
             AiResponseMapper mapper,
-            AppDbContext context)
+            AppDbContext context,
+            IShelfComplianceRuleService ruleEngine)
         {
             _storageService = storageService;
             _aiVisionService = aiVisionService;
             _mapper = mapper;
             _context = context;
+            _ruleEngine = ruleEngine;
         }
-
+        
         public async Task<AuditResultDto> ProcessAuditAsync(IFormFile image, int taskId, int userId)
         {
-            // ── 1. Task'ı doğrula ────────────────────────────────────────────
-            var task = await _context.Tasks
-                .Include(t => t.Store)
-                .FirstOrDefaultAsync(t => t.Id == taskId)
-                ?? throw new KeyNotFoundException($"Task {taskId} bulunamadı.");
+            // 1. Task kontrolü
+            var task = await _context.Tasks.Include(t => t.Store).FirstOrDefaultAsync(t => t.Id == taskId) 
+                       ?? throw new KeyNotFoundException($"Task {taskId} bulunamadı.");
 
-            if (task.UserId != userId)
-                throw new UnauthorizedAccessException("Bu task size ait değil.");
+            // 2. Fotoğraf Yükle
+            var PreImageUrl = await _storageService.UploadImageAsync(image);
 
-            if (task.Status == AuditTaskStatus.COMPLETED)
-                throw new InvalidOperationException("Bu task zaten tamamlanmış.");
+            // 3. AI Servisine Yolla (Ham veri al)
+            var aiResult = await _aiVisionService.AnalyzeShelfAsync(image);
 
-            // ── 2. Fotoğrafı Blob Storage'a yükle ───────────────────────────
-            var imageUrl = await _storageService.UploadImageAsync(image);
+            // 4. Mapper (DTO -> Entity Çevirisi)
+            var products = _mapper.MapToEntity(aiResult.Products);
 
-            // ── 3. AI servisine gönder ───────────────────────────────────────
-            var aiResult = await _aiVisionService.AnalyzeShelfAsync(imageUrl);
+            // 5. Kural Motoru (İş Zekası ve İhlaller)
+            var (issues, score, shelfShare, brandDist) = _ruleEngine.EvaluateRules(products);
 
-            // ── 4. AI response → Entity dönüşümü ────────────────────────────
-            var (audit, products, issues) = _mapper.Map(
-                aiResult,
-                taskId,
-                task.StoreId,
-                userId,
-                imageUrl);
+            // 6. DB Entity'sini hazırla
+            var audit = new Audit
+            {
+                TaskId = taskId,
+                StoreId = task.StoreId,
+                UserId = userId,
+                PreImageUrl = PreImageUrl,
+                PostImageUrl = aiResult.PostImageAzureUrl,
+                CaptureDate = DateTime.UtcNow,
+                ComplianceScore = score,
+                ShelfSharePercentage = shelfShare,
+                BrandDistributionJson = brandDist,
+                Status = score >= 80 ? AuditStatus.COMPLIANT : score >= 60 ? AuditStatus.WARNING : AuditStatus.NON_COMPLIANT,
+                Products = products,
+                Issues = issues
+            };
 
-            // ── 5. DB'ye tek transaction'da yaz ─────────────────────────────
-            audit.Products = products;
-            audit.Issues = issues;
-
+            // 7. DB'ye yaz ve Task'ı kapat
             _context.Audits.Add(audit);
-
             task.Status = AuditTaskStatus.COMPLETED;
             task.CompletedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
 
-            await _context.SaveChangesAsync(); // tek SaveChanges — atomik
-
-            // ── 6. Sonucu döndür ─────────────────────────────────────────────
+            // 8. Sonucu dön
             return new AuditResultDto
             {
                 AuditId = audit.Id,
@@ -75,7 +80,6 @@ namespace ApiBackend.Services.Impl
                 ShelfSharePercentage = audit.ShelfSharePercentage,
                 Status = audit.Status.ToString(),
                 CaptureDate = audit.CaptureDate,
-                ImageUrl = audit.ImageUrl!,
                 TotalProducts = products.Count,
                 TotalIssues = issues.Count,
             };

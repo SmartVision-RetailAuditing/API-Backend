@@ -1,0 +1,55 @@
+1. GENEL RAF PAYI (SHELF SHARE) KURALI
+
+Ana Marka: PINAR
+
+Minimum Raf Payı: %60
+
+İhlal Durumu: Toplam ürün sayısına oranla PINAR markalı ürünlerin oranı %60'ın altında kalırsa 15 PUAN ceza kesilir.
+
+Hata Tipi: LOW_SHELF_SHARE (Yüksek Öncelikli)
+
+2. ZORUNLU ÜRÜN LİSTESİ (MUST-HAVE PRODUCTS)
+
+Aşağıdaki ürünün rafta bulunması KRİTİK zorunluluktur:
+
+Ürün Kodu: 153107682
+
+İhlal Durumu: Bu ürünün rafta tespit edilememesi durumunda 25 PUAN ceza kesilir.
+
+Hata Tipi: MISSING_PRODUCT (Kritik Öncelikli)
+
+3. SABİT FİYAT UYGULAMASI
+
+Aşağıdaki ürün için belirlenen raf fiyatı sabittir:
+
+Ürün Kodu: 153106322
+
+Belirlenen Fiyat: 45.90 TL
+
+İhlal Durumu: Raftaki fiyatın 45.90 TL'den farklı (eksik veya fazla) olması durumunda 15 PUAN ceza kesilir.
+
+Hata Tipi: WRONG_PRICE (Yüksek Öncelikli)
+
+4. RAF POZİSYONU VE TEŞHİR KURALLARI
+
+Kapsam: İsminde "Tam Yağlı" ibaresi geçen tüm ürünler.
+
+Kural: Bu ürünler "Göz Hizası" (Eye-Level) seviyesinde sergilenmelidir.
+
+İhlal Durumu: "Tam Yağlı" ürünlerin göz hizasının dışında sergilenmesi durumunda 5 PUAN ceza kesilir.
+
+Hata Tipi: WRONG_SHELF_POSITION (Orta Öncelikli)
+
+5. PUANLAMA VE DEĞERLENDİRME
+
+Başlangıç Puanı: 100
+
+Minimum Puan: 0
+
+Durum Baremleri:
+
+95 - 100 Puan: COMPLIANT (Tam Uygun)
+
+60 - 80 Puan: WARNING (Uyarı - İyileştirme Gerekli)
+
+60 Altı: NON_COMPLIANT (Uygun Değil - Acil Müdahale)

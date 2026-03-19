@@ -10,7 +10,7 @@
         public decimal ShelfSharePercentage { get; set; }
         public string Status { get; set; } = string.Empty; // "COMPLIANT" | "WARNING" | "NON_COMPLIANT"
         public DateTime CaptureDate { get; set; }
-        public string ImageUrl { get; set; } = string.Empty;
+        public string PreImageUrl { get; set; } = string.Empty;
         public int TotalProducts { get; set; }
         public int TotalIssues { get; set; }
     }
