@@ -10,9 +10,11 @@ namespace ApiBackend.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        public AuthController(IAuthService authService)
+        private readonly IEventPublisher _eventPublisher;
+        public AuthController(IAuthService authService, IEventPublisher eventPublisher)
         {
             _authService = authService;
+            _eventPublisher = eventPublisher;
         }
 
         [HttpPost("login")]
@@ -24,6 +26,7 @@ namespace ApiBackend.Controllers
             {
                 return Unauthorized(new { message = "Email or password is incorrect." });
             }
+            await _eventPublisher.PublishUserLoggedInAsync(response.UserId, DateTime.UtcNow);
 
             return Ok(response);
         }
@@ -33,7 +36,7 @@ namespace ApiBackend.Controllers
         [Authorize] // Anyone logged in can change his password.
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
         {
-            // Token'dan ID'yi al (Baþkasý adýna deðiþtiremesin diye)
+            // Token'dan ID'yi al (Baï¿½kasï¿½ adï¿½na deï¿½iï¿½tiremesin diye)
             var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
             int userId = int.Parse(userIdString);
@@ -45,4 +48,6 @@ namespace ApiBackend.Controllers
             return Ok(new { message = "Password updated successfully." });
         }
     }
+    
+    
 }

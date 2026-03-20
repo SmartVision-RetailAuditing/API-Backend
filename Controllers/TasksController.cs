@@ -14,10 +14,12 @@ namespace ApiBackend.Controllers
     public class TasksController : ControllerBase
     {
         private readonly ITaskService _taskService;
+        private readonly IEventPublisher _eventPublisher;
 
-        public TasksController(ITaskService taskService)
+        public TasksController(ITaskService taskService, IEventPublisher eventPublisher)
         {
             _taskService = taskService;
+            _eventPublisher = eventPublisher;
         }
 
         // GET: api/tasks/stats
@@ -52,7 +54,7 @@ namespace ApiBackend.Controllers
             [FromQuery] string? status = null,
             [FromQuery] string? priority = null,
             [FromQuery] string? taskType = null,
-            [FromQuery] int? userId = null)         // YENÝ — UserDetailPage için
+            [FromQuery] int? userId = null)         // YENï¿½ ï¿½ UserDetailPage iï¿½in
         {
             var result = await _taskService.GetAllTasksAsync(
                 page, size, search, status, priority, taskType, userId);
@@ -85,6 +87,7 @@ namespace ApiBackend.Controllers
         public async Task<ActionResult<TaskDto>> CreateTask([FromBody] CreateTaskDto request)
         {
             var created = await _taskService.CreateTaskAsync(request);
+            await _eventPublisher.PublishTaskCreatedAsync(created.Id);
             return CreatedAtAction(nameof(GetTaskById), new { id = created.Id }, created);
         }
 
@@ -103,6 +106,8 @@ namespace ApiBackend.Controllers
             {
                 var result = await _taskService.UpdateTaskAsync(id, request, currentUserId, userRole);
                 if (!result) return NotFound(new { message = "Task not found." });
+                
+                await _eventPublisher.PublishTaskUpdatedAsync(id);
                 return NoContent();
             }
             catch (UnauthorizedAccessException ex)
@@ -118,6 +123,7 @@ namespace ApiBackend.Controllers
         {
             var result = await _taskService.DeleteTaskAsync(id);
             if (!result) return NotFound(new { message = "Task not found." });
+            await _eventPublisher.PublishTaskDeletedAsync(id);
             return NoContent();
         }
     }

@@ -13,10 +13,12 @@ namespace ApiBackend.Controllers
     public class AuditProductsController : ControllerBase
     {
         private readonly IAuditProductService _productService;
+        private readonly IEventPublisher _eventPublisher;
 
-        public AuditProductsController(IAuditProductService productService)
+        public AuditProductsController(IAuditProductService productService, IEventPublisher eventPublisher)
         {
             _productService = productService;
+            _eventPublisher = eventPublisher;
         }
 
         // POST: api/auditproducts
@@ -24,6 +26,7 @@ namespace ApiBackend.Controllers
         public async Task<ActionResult<AuditProductDto>> CreateAuditProduct([FromBody] CreateAuditProductDto request)
         {
             var createdProduct = await _productService.AddProductToAuditAsync(request);
+            await _eventPublisher.PublishAuditProductCreatedAsync(request.AuditId, createdProduct.Id);
 
             // 201 Created döner ve Location header'ında bağlı olduğu Audit'in linkini verir
             return CreatedAtAction(nameof(AuditsController.GetAuditById), "Audits", new { id = request.AuditId }, createdProduct);
@@ -36,6 +39,7 @@ namespace ApiBackend.Controllers
             var result = await _productService.UpdateProductAsync(id, request);
 
             if (!result) return NotFound(new { message = "Audit product not found." });
+            await _eventPublisher.PublishAuditProductUpdatedAsync(id);
 
             return NoContent();
         }
@@ -47,6 +51,7 @@ namespace ApiBackend.Controllers
             var result = await _productService.DeleteProductAsync(id);
 
             if (!result) return NotFound(new { message = "Audit product not found." });
+            await _eventPublisher.PublishAuditProductDeletedAsync(id);
 
             return NoContent();
         }

@@ -13,10 +13,12 @@ namespace ApiBackend.Controllers
     public class AuditIssuesController : ControllerBase
     {
         private readonly IAuditIssueService _issueService;
+        private readonly IEventPublisher _eventPublisher;
 
-        public AuditIssuesController(IAuditIssueService issueService)
+        public AuditIssuesController(IAuditIssueService issueService, IEventPublisher eventPublisher)
         {
             _issueService = issueService;
+            _eventPublisher = eventPublisher;
         }
 
         // POST: api/auditissues
@@ -24,9 +26,12 @@ namespace ApiBackend.Controllers
         public async Task<ActionResult<AuditIssueDto>> CreateAuditIssue([FromBody] CreateAuditIssueDto request)
         {
             var createdIssue = await _issueService.AddIssueToAuditAsync(request);
+            
+            await _eventPublisher.PublishAuditIssueCreatedAsync(request.AuditId, createdIssue.Id);
 
             // 201 Created döner ve Location header'ında bağlı olduğu Audit'in linkini verir
             return CreatedAtAction(nameof(AuditsController.GetAuditById), "Audits", new { id = request.AuditId }, createdIssue);
+            
         }
 
         // DELETE: api/auditissues/5

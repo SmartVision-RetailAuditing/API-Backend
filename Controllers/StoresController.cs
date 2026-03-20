@@ -13,10 +13,12 @@ namespace ApiBackend.Controllers
     public class StoresController : ControllerBase
     {
         private readonly IStoreService _storeService;
+        private readonly IEventPublisher _eventPublisher;
 
-        public StoresController(IStoreService storeService)
+        public StoresController(IStoreService storeService, IEventPublisher eventPublisher)
         {
             _storeService = storeService;
+            _eventPublisher = eventPublisher;
         }
 
         // GET: api/stores?page=1&size=10&search=migros
@@ -45,6 +47,7 @@ namespace ApiBackend.Controllers
         public async Task<ActionResult<StoreDto>> CreateStore([FromBody] CreateStoreDto request)
         {
             var created = await _storeService.CreateStoreAsync(request);
+            await _eventPublisher.PublishStoreCreatedAsync(created.Id);
             return CreatedAtAction(nameof(GetStore), new { id = created.Id }, created);
         }
 
@@ -57,6 +60,7 @@ namespace ApiBackend.Controllers
         {
             var result = await _storeService.UpdateStoreAsync(id, request);
             if (!result) return NotFound(new { message = "Store not found." });
+            await _eventPublisher.PublishStoreUpdatedAsync(id);
             return NoContent();
         }
 
@@ -67,6 +71,7 @@ namespace ApiBackend.Controllers
         {
             var result = await _storeService.DeleteStoreAsync(id);
             if (!result) return NotFound(new { message = "Store not found." });
+            await _eventPublisher.PublishStoreDeletedAsync(id);
             return NoContent();
         }
     }

@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ApiBackend.Data;
+using ApiBackend.Services.Impl;
+using YourApp.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +47,11 @@ builder.Services.AddScoped<ApiBackend.Mappers.AiResponseMapper>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditSubmissionService, ApiBackend.Services.Impl.AuditSubmissionService>();
 
 builder.Services.AddControllers();
+
+// ──  SignalR Pipeline Serviceleri  ───────────────────────────────────────────────────
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IEventPublisher, EventPublisher>();
+
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -113,7 +120,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy
-            .WithOrigins(origins)
+            .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -163,6 +170,7 @@ app.UseRouting();
 app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHub<ProductHub>("/api/producthub");
 app.MapControllers();
 app.Run();
 
