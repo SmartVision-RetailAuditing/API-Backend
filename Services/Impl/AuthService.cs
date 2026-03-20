@@ -33,7 +33,12 @@ namespace ApiBackend.Services.Impl
 
             var token = CreateToken(user);
 
-            return new LoginResponseDto { Token = token };
+            return new LoginResponseDto 
+            { 
+                Token = token,
+                UserId = user.Id,
+                Role = user.Role.ToString() // .ToString() ekleyerek string'e çeviriyoruz
+            };
         }
 
         private string CreateToken(User user)

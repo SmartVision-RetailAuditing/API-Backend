@@ -36,4 +36,12 @@
       <Folder Include="Migrations\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\ApiBackend.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\Debug\net8.0\ApiBackend.Tests.sourcelink.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\Debug\net8.0\MvcTestingAppManifest.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\project.packagespec.json" />
+    </ItemGroup>
+
 </Project>

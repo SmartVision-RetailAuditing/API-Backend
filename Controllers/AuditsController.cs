@@ -14,12 +14,14 @@ namespace ApiBackend.Controllers
     {
         private readonly IAuditService _auditService;
         private readonly IAuditSubmissionService _submissionService;
+        private readonly IEventPublisher _eventPublisher;
         
 
-        public AuditsController(IAuditService auditService, IAuditSubmissionService submissionService)
+        public AuditsController(IAuditService auditService, IAuditSubmissionService submissionService, IEventPublisher eventPublisher)
         {
             _auditService = auditService;
             _submissionService = submissionService;
+            _eventPublisher = eventPublisher;
         }
 
         // GET: api/Audits?page=1&size=10&search=migros&status=WARNING&storeId=4
@@ -49,6 +51,7 @@ namespace ApiBackend.Controllers
         public async Task<ActionResult<AuditDto>> CreateAudit([FromBody] CreateAuditDto request)
         {
             var created = await _auditService.CreateAuditAsync(request);
+            await _eventPublisher.PublishAuditCreatedAsync(created.Id);
             return CreatedAtAction(nameof(GetAuditById), new { id = created.Id }, created);
         }
 
@@ -58,6 +61,7 @@ namespace ApiBackend.Controllers
         {
             var result = await _auditService.UpdateAuditAsync(id, request);
             if (!result) return NotFound(new { message = "Audit not found." });
+            await _eventPublisher.PublishAuditUpdatedAsync(id);
             return NoContent();
         }
 
@@ -67,7 +71,9 @@ namespace ApiBackend.Controllers
         public async Task<IActionResult> DeleteAudit(int id)
         {
             var result = await _auditService.DeleteAuditAsync(id);
+            
             if (!result) return NotFound(new { message = "Audit not found." });
+            await _eventPublisher.PublishAuditDeletedAsync(id);
             return NoContent();
         }
 
@@ -87,6 +93,7 @@ namespace ApiBackend.Controllers
             try
             {
                 var result = await _submissionService.ProcessAuditAsync(request.Image, request.TaskId, userId);
+                await _eventPublisher.PublishAuditSubmittedAsync(request.TaskId);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
