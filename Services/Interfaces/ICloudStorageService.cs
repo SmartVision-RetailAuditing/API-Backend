@@ -10,6 +10,7 @@
         /// <summary>
         /// Ham blob URL'inden 24 saatlik SAS URL üretir.
         /// </summary>
-        string GenerateSasUrl(string blobUrl, TimeSpan expiry);
+        string PreImageGenerateSasUrl(string blobUrl, TimeSpan expiry);
+        string PostImageGenerateSasUrl(string blobUrl, TimeSpan expiry);
     }
 }

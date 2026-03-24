@@ -8,19 +8,22 @@ namespace ApiBackend.Services.Impl
     public class CloudStorageService : ICloudStorageService
     {
         private readonly string _connectionString;
-        private readonly string _containerName;
+        private readonly string _precontainerName;
+        private readonly string _postcontainerName;
 
         public CloudStorageService(IConfiguration configuration)
         {
             _connectionString = configuration["AzureBlobStorag:ConnectionString"]
                 ?? throw new InvalidOperationException("AzureBlobStorage:ConnectionString is missing.");
-            _containerName = configuration["AzureBlobStorag:ContainerName"]
+            _precontainerName = configuration["AzureBlobStorag:PreContainerName"]
                 ?? throw new InvalidOperationException("AzureBlobStorage:ContainerName is missing.");
+            _postcontainerName = configuration["AzureBlobStorag:PostContainerName"]
+                ?? throw new InvalidOperationException("AzureBlobStorage:PostContainerName is missing.");
         }
 
         public async Task<string> UploadImageAsync(IFormFile image)
         {
-            var containerClient = new BlobContainerClient(_connectionString, _containerName);
+            var containerClient = new BlobContainerClient(_connectionString, _precontainerName);
             await containerClient.CreateIfNotExistsAsync(PublicAccessType.None); // Private container
 
             var extension = Path.GetExtension(image.FileName);
@@ -37,19 +40,19 @@ namespace ApiBackend.Services.Impl
             return blobClient.Uri.ToString();
         }
 
-        public string GenerateSasUrl(string blobUrl, TimeSpan expiry)
+        public string PreImageGenerateSasUrl(string blobUrl, TimeSpan expiry)
         {
             // Ham URL'den blob adını parse et
             var uri = new Uri(blobUrl);
-            var blobName = uri.AbsolutePath.TrimStart('/').Replace($"{_containerName}/", "");
+            var blobName = uri.AbsolutePath.TrimStart('/').Replace($"{_precontainerName}/", "");
 
-            var containerClient = new BlobContainerClient(_connectionString, _containerName);
+            var containerClient = new BlobContainerClient(_connectionString, _precontainerName);
             var blobClient = containerClient.GetBlobClient(blobName);
 
             // SAS token builder — Read izni, 24 saat geçerli
             var sasBuilder = new BlobSasBuilder
             {
-                BlobContainerName = _containerName,
+                BlobContainerName = _precontainerName,
                 BlobName = blobName,
                 Resource = "b", // b = blob
                 ExpiresOn = DateTimeOffset.UtcNow.Add(expiry),
@@ -58,5 +61,51 @@ namespace ApiBackend.Services.Impl
 
             return blobClient.GenerateSasUri(sasBuilder).ToString();
         }
+
+        public string PostImageGenerateSasUrl(string blobUrl, TimeSpan expiry)
+        {
+            // Ham URL'den blob adını parse et
+            var uri = new Uri(blobUrl);
+            var blobName = uri.AbsolutePath.TrimStart('/').Replace($"{_postcontainerName}/", "");
+
+            var containerClient = new BlobContainerClient(_connectionString, _postcontainerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            // SAS token builder — Read izni, 24 saat geçerli
+            var sasBuilder = new BlobSasBuilder
+            {
+                BlobContainerName = _postcontainerName,
+                BlobName = blobName,
+                Resource = "b", // b = blob
+                ExpiresOn = DateTimeOffset.UtcNow.Add(expiry),
+            };
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+            return blobClient.GenerateSasUri(sasBuilder).ToString();
+        }
+
+        public string GenerateSasUrl(string blobUrl, TimeSpan expiry)
+        {
+            // Ham URL'den blob adını parse et
+            var uri = new Uri(blobUrl);
+            var blobName = uri.AbsolutePath.TrimStart('/').Replace($"{_postcontainerName}/", "");
+
+            var containerClient = new BlobContainerClient(_connectionString, _postcontainerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            // SAS token builder — Read izni, 24 saat geçerli
+            var sasBuilder = new BlobSasBuilder
+            {
+                BlobContainerName = _postcontainerName,
+                BlobName = blobName,
+                Resource = "b", // b = blob
+                ExpiresOn = DateTimeOffset.UtcNow.Add(expiry),
+            };
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+            return blobClient.GenerateSasUri(sasBuilder).ToString();
+        }
+        
+        
     }
 }

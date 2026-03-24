@@ -35,7 +35,11 @@ namespace ApiBackend.Services.Impl
             var dto = MapToDto(audit);
 
             if (!string.IsNullOrEmpty(audit.PreImageUrl))
-                dto.PreImageUrl = _storageService.GenerateSasUrl(audit.PreImageUrl, TimeSpan.FromHours(24));
+                dto.PreImageUrl = _storageService.PreImageGenerateSasUrl(audit.PreImageUrl, TimeSpan.FromHours(24));
+            if (!string.IsNullOrEmpty(audit.PostImageUrl))
+            {
+                dto.PostImageUrl = _storageService.PostImageGenerateSasUrl(audit.PostImageUrl, TimeSpan.FromHours(24));
+            }
 
             return dto;
         }
