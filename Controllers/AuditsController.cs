@@ -101,5 +101,26 @@ namespace ApiBackend.Controllers
             catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
             catch (HttpRequestException ex) { return StatusCode(502, new { message = $"Harici servis hatası: {ex.Message}" }); }
         }
+
+        // GET: api/Audits/my-audits?page=1&size=10&search=migros&status=COMPLIANT&startDate=2025-01-01&endDate=2025-01-31
+        [HttpGet("my-audits")]
+        [Authorize(Roles = "FIELD_WORKER")]
+        public async Task<ActionResult<PagedResult<MyAuditDto>>> GetMyAudits(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] string? status = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            var result = await _auditService.GetMyAuditsAsync(
+                userId, page, size, search, status, startDate, endDate);
+
+            return Ok(result);
+        }
     }
 }

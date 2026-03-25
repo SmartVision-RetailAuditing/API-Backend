@@ -16,5 +16,15 @@ namespace ApiBackend.Services.Interfaces
         Task<AuditDto> CreateAuditAsync(CreateAuditDto createDto);
         Task<bool> UpdateAuditAsync(int id, UpdateAuditDto updateDto);
         Task<bool> DeleteAuditAsync(int id);
+
+        Task<PagedResult<MyAuditDto>> GetMyAuditsAsync(
+            int userId,
+            int pageNumber,
+            int pageSize,
+            string? search = null,
+            string? status = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null
+);
     }
 }

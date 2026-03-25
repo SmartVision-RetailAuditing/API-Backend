@@ -88,6 +88,19 @@ namespace ApiBackend.Services.Impl
             return true;
         }
 
+        public async Task<PagedResult<MyAuditDto>> GetMyAuditsAsync(
+            int userId,
+            int pageNumber,
+            int pageSize,
+            string? search = null,
+            string? status = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
+        {
+            return await _auditRepository.GetMyAuditsAsync(
+                userId, pageNumber, pageSize, search, status, startDate, endDate);
+        }
+
         private static AuditDto MapToDto(Audit a) => new AuditDto
         {
             Id = a.Id,

@@ -24,5 +24,16 @@ namespace ApiBackend.Repositories.Interfaces
         // Kullanıcının yaptığı tüm denetimleri puanlarıyla getirir
         Task<IEnumerable<Audit>> GetAuditsByUserIdAsync(int userId);
         Task<IEnumerable<Audit>> GetAuditsByStoreIdAsync(int storeId);
+
+
+        Task<PagedResult<MyAuditDto>> GetMyAuditsAsync(
+            int userId,
+            int pageNumber,
+            int pageSize,
+            string? search = null,
+            string? status = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null
+        );
     }
 }
