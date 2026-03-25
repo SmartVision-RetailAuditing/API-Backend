@@ -148,5 +148,113 @@ namespace ApiBackend.Repositories.Impl
                 .Where(a => a.StoreId == storeId)
                 .ToListAsync();
         }
+
+        public async Task<PagedResult<MyAuditDto>> GetMyAuditsAsync(
+            int userId,
+            int pageNumber,
+            int pageSize,
+            string? search = null,
+            string? status = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
+        {
+            var query = _context.Audits
+                .Include(a => a.Store)
+                .Include(a => a.Task)
+                .Include(a => a.Products)
+                .Include(a => a.Issues)
+                .Where(a => a.UserId == userId)  // temel filtre — başka kullanıcı göremesin
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var lower = search.ToLower();
+
+                // 1. ÇÖZÜM: C# tarafında arama kelimesiyle eşleşen TaskType enum'larını bul
+                var matchingTaskTypes = Enum.GetValues<TaskType>() // TaskType senin gerçek Enum adın olmalı
+                    .Where(e => e.ToString().ToLower().Contains(lower))
+                    .ToList();
+
+                // SQL'e "Store Name içeriyor mu VEYA TaskType bu listedekilerden biri mi?" diye sor (IN sorgusu)
+                query = query.Where(a =>
+                    a.Store.Name.ToLower().Contains(lower) ||
+                    matchingTaskTypes.Contains(a.Task.TaskType));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (Enum.TryParse<AuditStatus>(status.ToUpper(), out var parsedStatus))
+                    query = query.Where(a => a.Status == parsedStatus);
+            }
+
+            // 2. ÇÖZÜM: Tarihleri UTC olarak işaretle
+            if (startDate.HasValue)
+            {
+                var utcStartDate = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc);
+                query = query.Where(a => a.CaptureDate >= utcStartDate);
+            }
+
+            if (endDate.HasValue)
+            {
+                // AddTicks(-1) yerine < operatörü ile ertesi günün gece yarısından küçük olanları alıyoruz
+                var utcEndDate = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1), DateTimeKind.Utc);
+                query = query.Where(a => a.CaptureDate < utcEndDate);
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var data = await query
+                .OrderByDescending(a => a.CaptureDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new MyAuditDto
+                {
+                    Id = a.Id,
+                    TaskId = a.TaskId,
+                    StoreId = a.StoreId,
+                    StoreName = a.Store.Name,
+                    TaskType = a.Task.TaskType.ToString(),
+                    PreImageUrl = a.PreImageUrl,
+                    PostImageUrl = a.PostImageUrl,
+                    CaptureDate = a.CaptureDate,
+                    ComplianceScore = a.ComplianceScore,
+                    ShelfSharePercentage = a.ShelfSharePercentage,
+                    Status = a.Status.ToString(),
+                    BrandDistributionJson = a.BrandDistributionJson,
+                    Products = a.Products.Select(p => new MyAuditProductDto
+                    {
+                        Id = p.Id,
+                        AuditId = p.AuditId,
+                        ProductName = p.ProductName,
+                        ProductCode = p.ProductCode,
+                        BrandName = p.BrandName,
+                        Volume = p.Volume,
+                        Category = p.Category,
+                        Price = p.Price,
+                        IsEyeLevel = p.IsEyeLevel,
+                        ShelfPosition = p.ShelfPosition,
+                        IsManuallyEdited = p.IsManuallyEdited,
+                        ConfidenceScore = p.ConfidenceScore
+                    }).ToList(),
+                    Issues = a.Issues.Select(i => new AuditIssueDto
+                    {
+                        Id = i.Id,
+                        AuditId = i.AuditId,
+                        IssueType = i.IssueType.ToString(),
+                        Severity = i.Severity.ToString(),
+                        Description = i.Description
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return new PagedResult<MyAuditDto>
+            {
+                Data = data,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                CurrentPage = pageNumber,
+                PageSize = pageSize
+            };
+        }
     }
 }
