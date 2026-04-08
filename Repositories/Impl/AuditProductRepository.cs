@@ -37,5 +37,22 @@ namespace ApiBackend.Repositories.Impl
             _context.AuditProducts.Remove(product);
             await _context.SaveChangesAsync();
         }
+
+        // ── Yeni metodlar — field worker özelliği için ────────────────────────────
+
+        public async Task<AuditProduct?> GetByIdWithAuditAsync(int id)
+        {
+            return await _context.AuditProducts
+                .Include(p => p.Audit)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<Audit> GetAuditMetricsAsync(int auditId)
+        {
+            // RecalculationService Products dahil kaydetmişti;
+            // burada sadece metrik alanları lazım, Products include etmeye gerek yok.
+            return await _context.Audits
+                .FirstAsync(a => a.Id == auditId);
+        }
     }
 }
