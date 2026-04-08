@@ -19,6 +19,7 @@ builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAuditIssueReposit
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IDashboardRepository, ApiBackend.Repositories.Impl.DashboardRepository>();
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.IAnalyticsRepository, ApiBackend.Repositories.Impl.AnalyticsRepository>();
 builder.Services.AddScoped<ApiBackend.Repositories.Interfaces.INotificationRepository, ApiBackend.Repositories.Impl.NotificationRepository>();
+builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuditRecalculationService, ApiBackend.Services.Impl.AuditRecalculationService>();
 
 // 2. Services (Business Logic Layer) Injection
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAuthService, ApiBackend.Services.Impl.AuthService>();
