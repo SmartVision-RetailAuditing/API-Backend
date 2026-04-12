@@ -34,6 +34,9 @@ builder.Services.AddScoped<ApiBackend.Services.Interfaces.IAnalyticsService, Api
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.INotificationService, ApiBackend.Services.Impl.NotificationService>();
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.IShelfComplianceRuleService, ApiBackend.Services.Impl.ShelfComplianceRuleService>();
 
+builder.Services.AddScoped<ApiBackend.Services.Impl.AuditPdfExportService>();
+builder.Services.AddScoped<ApiBackend.Services.Impl.AuditExcelExportService>();
+
 // ── AI Pipeline servisleri ───────────────────────────────────────────────────
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.ICloudStorageService, ApiBackend.Services.Impl.CloudStorageService>();
 
