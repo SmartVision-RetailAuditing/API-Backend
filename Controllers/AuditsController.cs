@@ -1,5 +1,6 @@
 ﻿using ApiBackend.DTOs;
 using ApiBackend.DTOs.AuditDtos;
+using ApiBackend.Services.Impl;
 using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,13 +16,23 @@ namespace ApiBackend.Controllers
         private readonly IAuditService _auditService;
         private readonly IAuditSubmissionService _submissionService;
         private readonly IEventPublisher _eventPublisher;
-        
 
-        public AuditsController(IAuditService auditService, IAuditSubmissionService submissionService, IEventPublisher eventPublisher)
+        private readonly AuditPdfExportService _pdfService;
+        private readonly AuditExcelExportService   _excelService;
+
+
+        public AuditsController(
+            IAuditService auditService, 
+            IAuditSubmissionService submissionService, 
+            IEventPublisher eventPublisher, 
+            AuditPdfExportService pdfService, 
+            AuditExcelExportService excelService)
         {
             _auditService = auditService;
             _submissionService = submissionService;
             _eventPublisher = eventPublisher;
+            _pdfService = pdfService;
+            _excelService = excelService;
         }
 
         // GET: api/Audits?page=1&size=10&search=migros&status=WARNING&storeId=4
@@ -121,6 +132,39 @@ namespace ApiBackend.Controllers
                 userId, page, size, search, status, startDate, endDate);
 
             return Ok(result);
+        }
+
+        // GET: api/Audits/{id}/export/pdf
+        [HttpGet("{id:int}/export/pdf")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportPdf(int id)
+        {
+            try
+            {
+                var bytes = await _pdfService.GenerateAsync(id);
+                return File(bytes, "application/pdf", $"audit-{id}-report.pdf");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/Audits/export/excel?storeId=2&status=WARNING&dateFrom=2026-01-01&dateTo=2026-12-31
+        [HttpGet("export/excel")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportExcel(
+            [FromQuery] int? storeId = null,
+            [FromQuery] string? status = null,
+            [FromQuery] DateTime? dateFrom = null,
+            [FromQuery] DateTime? dateTo = null)
+        {
+            var bytes = await _excelService.GenerateAsync(storeId, status, dateFrom, dateTo);
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"smartvision-audits-{DateTime.UtcNow:yyyyMMdd}.xlsx"
+            );
         }
     }
 }
