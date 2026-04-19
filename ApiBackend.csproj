@@ -44,6 +44,19 @@
       <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\Debug\net8.0\MvcTestingAppManifest.json" />
       <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\project.assets.json" />
       <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.deps.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests.deps.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests\obj\ApiBackend.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.Development.example.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.example.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\MvcTestingAppManifest.json" />
     </ItemGroup>
 
 </Project>
