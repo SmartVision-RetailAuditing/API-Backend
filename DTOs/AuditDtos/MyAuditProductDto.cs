@@ -12,6 +12,14 @@
         public decimal? Price { get; set; }
         public bool IsEyeLevel { get; set; }
         public int? ShelfPosition { get; set; }
+        
+        public int BoundingBoxX { get; set; }
+        
+        public int BoundingBoxY { get; set; }
+        
+        public int BoundingBoxWidth { get; set; }
+        
+        public int BoundingBoxHeight { get; set; }
         public bool IsManuallyEdited { get; set; }
         public double ConfidenceScore { get; set; }
     }
