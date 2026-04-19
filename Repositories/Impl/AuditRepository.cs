@@ -233,6 +233,10 @@ namespace ApiBackend.Repositories.Impl
                         Price = p.Price,
                         IsEyeLevel = p.IsEyeLevel,
                         ShelfPosition = p.ShelfPosition,
+                        BoundingBoxX = p.BoundingBoxX,
+                        BoundingBoxY = p.BoundingBoxY,
+                        BoundingBoxWidth = p.BoundingBoxWidth,
+                        BoundingBoxHeight = p.BoundingBoxHeight,
                         IsManuallyEdited = p.IsManuallyEdited,
                         ConfidenceScore = p.ConfidenceScore
                     }).ToList(),
