@@ -14,7 +14,6 @@ namespace ApiBackend.Services.Impl
         public AuditPdfExportService(AppDbContext context)
         {
             _context = context;
-            // Community lisansı — açık kaynak projeler için ücretsiz
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
@@ -28,6 +27,12 @@ namespace ApiBackend.Services.Impl
                 .Include(a => a.Issues)
                 .FirstOrDefaultAsync(a => a.Id == auditId)
                 ?? throw new KeyNotFoundException($"Audit {auditId} bulunamadı.");
+
+            // ═══ UTC → Türkiye saati çevirme ═══
+            var turkeyTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time");
+            var auditDateLocal = TimeZoneInfo.ConvertTimeFromUtc(audit.CaptureDate, turkeyTimeZone);
+            var generatedDateLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, turkeyTimeZone);
+            // ═══════════════════════════════════
 
             // Brand distribution parse
             var brandData = new Dictionary<string, double>();
@@ -64,7 +69,7 @@ namespace ApiBackend.Services.Impl
                             });
                             row.ConstantItem(120).AlignRight().Column(col =>
                             {
-                                col.Item().Text(audit.CaptureDate.ToString("dd MMM yyyy HH:mm"))
+                                col.Item().Text(auditDateLocal.ToString("dd MMM yyyy HH:mm"))
                                     .FontSize(9).FontColor("#64748B");
                                 col.Item().Text($"Auditor: {audit.User?.FullName ?? "—"}")
                                     .FontSize(9).FontColor("#64748B");
@@ -209,7 +214,7 @@ namespace ApiBackend.Services.Impl
                         .Text(t =>
                         {
                             t.Span("SmartVision  ·  Generated ").FontSize(8).FontColor("#94A3B8");
-                            t.Span(DateTime.UtcNow.ToString("dd MMM yyyy HH:mm")).FontSize(8).FontColor("#94A3B8");
+                            t.Span(generatedDateLocal.ToString("dd MMM yyyy HH:mm")).FontSize(8).FontColor("#94A3B8");
                             t.Span("  ·  Page ").FontSize(8).FontColor("#94A3B8");
                             t.CurrentPageNumber().FontSize(8).FontColor("#94A3B8");
                             t.Span(" of ").FontSize(8).FontColor("#94A3B8");
