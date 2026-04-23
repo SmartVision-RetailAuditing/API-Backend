@@ -37,6 +37,9 @@ builder.Services.AddScoped<ApiBackend.Services.Interfaces.IShelfComplianceRuleSe
 builder.Services.AddScoped<ApiBackend.Services.Impl.AuditPdfExportService>();
 builder.Services.AddScoped<ApiBackend.Services.Impl.AuditExcelExportService>();
 
+builder.Services.AddScoped<ApiBackend.Services.Impl.StorePdfExportService>();
+builder.Services.AddScoped<ApiBackend.Services.Impl.StoreExcelExportService>();
+
 // ── AI Pipeline servisleri ───────────────────────────────────────────────────
 builder.Services.AddScoped<ApiBackend.Services.Interfaces.ICloudStorageService, ApiBackend.Services.Impl.CloudStorageService>();
 

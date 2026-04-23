@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using ApiBackend.DTOs;
+﻿using ApiBackend.DTOs;
 using ApiBackend.DTOs.StoreDtos;
+using ApiBackend.Services.Impl;
 using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiBackend.Controllers
 {
@@ -14,11 +15,15 @@ namespace ApiBackend.Controllers
     {
         private readonly IStoreService _storeService;
         private readonly IEventPublisher _eventPublisher;
+        private readonly StorePdfExportService  _pdfService;
+        private readonly StoreExcelExportService _excelService;
 
-        public StoresController(IStoreService storeService, IEventPublisher eventPublisher)
+        public StoresController(IStoreService storeService, IEventPublisher eventPublisher, StorePdfExportService pdfService, StoreExcelExportService excelService)
         {
             _storeService = storeService;
             _eventPublisher = eventPublisher;
+            _pdfService = pdfService;
+            _excelService = excelService;
         }
 
         // GET: api/stores?page=1&size=10&search=migros
@@ -73,6 +78,35 @@ namespace ApiBackend.Controllers
             if (!result) return NotFound(new { message = "Store not found." });
             await _eventPublisher.PublishStoreDeletedAsync(id);
             return NoContent();
+        }
+
+        // GET: api/Stores/{id}/export/pdf
+        [HttpGet("{id:int}/export/pdf")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportPdf(int id)
+        {
+            try
+            {
+                var bytes = await _pdfService.GenerateAsync(id);
+                return File(bytes, "application/pdf", $"store-{id}-report.pdf");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/Stores/export/excel?search=migros
+        [HttpGet("export/excel")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportExcel([FromQuery] string? search = null)
+        {
+            var bytes = await _excelService.GenerateAsync(search);
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"smartvision-stores-{DateTime.UtcNow:yyyyMMdd}.xlsx"
+            );
         }
     }
 }
