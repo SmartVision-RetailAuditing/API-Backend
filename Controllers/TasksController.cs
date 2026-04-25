@@ -1,5 +1,6 @@
 using ApiBackend.DTOs;
 using ApiBackend.DTOs.TaskDtos;
+using ApiBackend.Services.Impl;
 using ApiBackend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,49 @@ namespace ApiBackend.Controllers
     {
         private readonly ITaskService _taskService;
         private readonly IEventPublisher _eventPublisher;
+        private readonly TaskPdfExportService   _pdfService;
+        private readonly TaskExcelExportService _excelService;
 
-        public TasksController(ITaskService taskService, IEventPublisher eventPublisher)
+        public TasksController(ITaskService taskService, IEventPublisher eventPublisher, TaskPdfExportService pdfService, TaskExcelExportService excelService)
         {
             _taskService = taskService;
             _eventPublisher = eventPublisher;
+            _pdfService = pdfService;
+            _excelService = excelService;
+        }
+
+        // GET: api/Tasks/{id}/export/pdf
+        [HttpGet("{id:int}/export/pdf")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportPdf(int id)
+        {
+            try
+            {
+                var bytes = await _pdfService.GenerateAsync(id);
+                return File(bytes, "application/pdf", $"task-{id}-report.pdf");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/Tasks/export/excel?search=migros&status=PENDING&priority=HIGH&taskType=SHELF_AUDIT&userId=5
+        [HttpGet("export/excel")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportExcel(
+            [FromQuery] string? search = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? priority = null,
+            [FromQuery] string? taskType = null,
+            [FromQuery] int? userId = null)
+        {
+            var bytes = await _excelService.GenerateAsync(search, status, priority, taskType, userId);
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"smartvision-tasks-{DateTime.UtcNow:yyyyMMdd}.xlsx"
+            );
         }
 
         // GET: api/tasks/stats
