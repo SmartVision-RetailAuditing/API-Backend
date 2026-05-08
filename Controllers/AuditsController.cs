@@ -1,0 +1,170 @@
+﻿using ApiBackend.DTOs;
+using ApiBackend.DTOs.AuditDtos;
+using ApiBackend.Services.Impl;
+using ApiBackend.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace ApiBackend.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize(Roles = "ADMIN,SUPERVISOR,FIELD_WORKER")]
+    public class AuditsController : ControllerBase
+    {
+        private readonly IAuditService _auditService;
+        private readonly IAuditSubmissionService _submissionService;
+        private readonly IEventPublisher _eventPublisher;
+
+        private readonly AuditPdfExportService _pdfService;
+        private readonly AuditExcelExportService   _excelService;
+
+
+        public AuditsController(
+            IAuditService auditService, 
+            IAuditSubmissionService submissionService, 
+            IEventPublisher eventPublisher, 
+            AuditPdfExportService pdfService, 
+            AuditExcelExportService excelService)
+        {
+            _auditService = auditService;
+            _submissionService = submissionService;
+            _eventPublisher = eventPublisher;
+            _pdfService = pdfService;
+            _excelService = excelService;
+        }
+
+        // GET: api/Audits?page=1&size=10&search=migros&status=WARNING&storeId=4
+        [HttpGet]
+        public async Task<ActionResult<PagedResult<AuditDto>>> GetAudits(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] string? status = null,
+            [FromQuery] int? storeId = null)   // ← YENİ
+        {
+            var result = await _auditService.GetAllAuditsAsync(page, size, search, status, storeId);
+            return Ok(result);
+        }
+
+        // GET: api/Audits/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<AuditDto>> GetAuditById(int id)
+        {
+            var audit = await _auditService.GetAuditByIdAsync(id);
+            if (audit == null) return NotFound(new { message = "Audit not found." });
+            return Ok(audit);
+        }
+
+        // POST: api/Audits
+        [HttpPost]
+        public async Task<ActionResult<AuditDto>> CreateAudit([FromBody] CreateAuditDto request)
+        {
+            var created = await _auditService.CreateAuditAsync(request);
+            await _eventPublisher.PublishAuditCreatedAsync(created.Id);
+            return CreatedAtAction(nameof(GetAuditById), new { id = created.Id }, created);
+        }
+
+        // PUT: api/Audits/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAudit(int id, [FromBody] UpdateAuditDto request)
+        {
+            var result = await _auditService.UpdateAuditAsync(id, request);
+            if (!result) return NotFound(new { message = "Audit not found." });
+            await _eventPublisher.PublishAuditUpdatedAsync(id);
+            return NoContent();
+        }
+
+        // DELETE: api/Audits/5
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> DeleteAudit(int id)
+        {
+            var result = await _auditService.DeleteAuditAsync(id);
+            
+            if (!result) return NotFound(new { message = "Audit not found." });
+            await _eventPublisher.PublishAuditDeletedAsync(id);
+            return NoContent();
+        }
+
+        // POST: api/Audits/submit
+        [HttpPost("submit")]
+        [Authorize(Roles = "FIELD_WORKER")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> SubmitAuditTask([FromForm] SubmitAuditRequest request)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            if (request.Image == null || request.Image.Length == 0)
+                return BadRequest(new { message = "Fotoğraf zorunludur." });
+
+            try
+            {
+                var result = await _submissionService.ProcessAuditAsync(request.Image, request.TaskId, userId);
+                await _eventPublisher.PublishAuditSubmittedAsync(request.TaskId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (HttpRequestException ex) { return StatusCode(502, new { message = $"Harici servis hatası: {ex.Message}" }); }
+        }
+
+        // GET: api/Audits/my-audits?page=1&size=10&search=migros&status=COMPLIANT&startDate=2025-01-01&endDate=2025-01-31
+        [HttpGet("my-audits")]
+        [Authorize(Roles = "FIELD_WORKER")]
+        public async Task<ActionResult<PagedResult<MyAuditDto>>> GetMyAudits(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] string? status = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            var result = await _auditService.GetMyAuditsAsync(
+                userId, page, size, search, status, startDate, endDate);
+
+            return Ok(result);
+        }
+
+        // GET: api/Audits/{id}/export/pdf
+        [HttpGet("{id:int}/export/pdf")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportPdf(int id)
+        {
+            try
+            {
+                var bytes = await _pdfService.GenerateAsync(id);
+                return File(bytes, "application/pdf", $"audit-{id}-report.pdf");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/Audits/export/excel?storeId=2&status=WARNING&dateFrom=2026-01-01&dateTo=2026-12-31
+        [HttpGet("export/excel")]
+        [Authorize(Roles = "ADMIN,SUPERVISOR")]
+        public async Task<IActionResult> ExportExcel(
+            [FromQuery] int? storeId = null,
+            [FromQuery] string? status = null,
+            [FromQuery] DateTime? dateFrom = null,
+            [FromQuery] DateTime? dateTo = null)
+        {
+            var bytes = await _excelService.GenerateAsync(storeId, status, dateFrom, dateTo);
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"smartvision-audits-{DateTime.UtcNow:yyyyMMdd}.xlsx"
+            );
+        }
+    }
+}
