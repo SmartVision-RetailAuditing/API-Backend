@@ -1,24 +1,62 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+        <PackageReference Include="Carter" Version="8.0.0" />
+        <PackageReference Include="ClosedXML" Version="0.105.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="8.0.0" />
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
+        <PackageReference Include="QuestPDF" Version="2026.2.4" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="ApiBackend.Tests/**/*.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="ApiBackend.Tests\" />
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\ApiBackend.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\Debug\net8.0\ApiBackend.Tests.sourcelink.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\Debug\net8.0\MvcTestingAppManifest.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.deps.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests.deps.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests\obj\ApiBackend.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\ApiBackend.Tests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.Development.example.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.example.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\appsettings.json" />
+      <_ContentIncludedByDefault Remove="ApiBackend.Tests\bin\Debug\net8.0\MvcTestingAppManifest.json" />
+    </ItemGroup>
 
 </Project>
